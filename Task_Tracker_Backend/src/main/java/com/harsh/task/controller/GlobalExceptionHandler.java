@@ -2,37 +2,44 @@ package com.harsh.task.controller;
 
 import com.harsh.task.domain.dto.ErrorResponseDto;
 import com.harsh.task.exception.TaskNotFoundException;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // 1. Updated Validation Handler
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponseDto> handleValidationException(
+    public ResponseEntity<Map<String, String>> handleValidationException(
             MethodArgumentNotValidException ex
     ){
-        String errorMessage =
-                ex.getBindingResult().getFieldErrors().stream().findFirst()
-                        .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                        .orElse("Validation Failed");
+        Map<String, String> errors = new HashMap<>();
 
-        ErrorResponseDto errorDto = new ErrorResponseDto(errorMessage);
+        // Loop through ALL errors and map the field name to your custom message
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            errors.put(error.getField(), error.getDefaultMessage());
+        });
 
-        return  new ResponseEntity<>(errorDto , HttpStatus.BAD_REQUEST);
+        // Returns {"title": "Title must be...", "dueDate": "Due date must..."}
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
 
+    // 2. Fixed Not Found Handler (Added the missing annotation!)
+    @ExceptionHandler(TaskNotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleExceptions(TaskNotFoundException ex){
 
         ErrorResponseDto errorResponseDto = new ErrorResponseDto(
-               String.format( "Task with ID '%s' not found" , ex.getId())
+                String.format( "Task with ID '%s' not found" , ex.getId())
         );
 
-        return new ResponseEntity<>(errorResponseDto , HttpStatus.BAD_REQUEST);
+        // Changed to NOT_FOUND (404) as it's the standard for missing resources
+        return new ResponseEntity<>(errorResponseDto , HttpStatus.NOT_FOUND);
     }
 }

@@ -9,46 +9,68 @@ import TaskForm from './components/TaskForm';
 const API_URL = 'http://localhost:8080/api/v1/tasks'; 
 
 export default function App() {
-  const [tasks, setTasks] = useState([]); // Starts empty now!
+  const [tasks, setTasks] = useState([]);
 
   // Modal states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
+  
+  // State to hold validation errors
+  const [formErrors , setFormErrors] = useState({});
 
-  // --- NEW: Fetching Data from Spring Boot ---
   const fetchTasks = async () => {
     try {
       const response = await axios.get(API_URL);
-      setTasks(response.data); // Load the database tasks into React's memory
+      setTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
   };
 
-  // Run fetchTasks EXACTLY ONCE when the app first loads
   useEffect(() => {
     fetchTasks(); 
   }, []);
 
-  // --- UPDATED: CRUD Operations using Axios ---
   const handleCreate = async (newTaskData) => {
+    setFormErrors({});
     try {
       await axios.post(API_URL, newTaskData);
       setIsCreateOpen(false);
-      fetchTasks(); // Refresh the list
+      fetchTasks();
     } catch (error) {
-      console.error("Error creating task:", error);
+      if (error.response && error.response.status === 400) {
+        setFormErrors(error.response.data);
+      } else {
+        console.error("Error creating task: " , error);
+      }
     }
   };
 
   const handleUpdate = async (updatedTaskData) => {
+    setFormErrors({});
     try {
       await axios.put(`${API_URL}/${taskToEdit.id}`, updatedTaskData);
       setTaskToEdit(null);
-      fetchTasks(); // Refresh the list
+      fetchTasks();
     } catch (error) {
-      console.error("Error updating task:", error);
+      if (error.response && error.response.status === 400) {
+        const responseData = error.response.data;
+        
+        if (responseData.title || responseData.description || responseData.dueDate || responseData.priority || responseData.status) {
+          setFormErrors(responseData);
+        } else if (responseData.errors && Array.isArray(responseData.errors)) {
+          const formattedErrors = {};
+          responseData.errors.forEach(err => {
+              formattedErrors[err.field] = err.defaultMessage;
+          });
+          setFormErrors(formattedErrors);
+        } else {
+          setFormErrors(responseData);
+        }
+      } else {
+        console.error("Error updating task: " , error);
+      }
     }
   };
 
@@ -56,23 +78,33 @@ export default function App() {
     try {
       await axios.delete(`${API_URL}/${taskToDelete.id}`);
       setTaskToDelete(null);
-      fetchTasks(); // Refresh the list
+      fetchTasks();
     } catch (error) {
       console.error("Error deleting task:", error);
     }
   };
 
   const handleToggleStatus = async (id, newStatus) => {
-    // Find the current task, swap its status, and send the full update to the backend
     const taskToUpdate = tasks.find(t => t.id === id);
     if (taskToUpdate) {
       try {
         await axios.put(`${API_URL}/${id}`, { ...taskToUpdate, status: newStatus });
-        fetchTasks(); // Refresh the list
+        fetchTasks();
       } catch (error) {
         console.error("Error updating status:", error);
       }
     }
+  };
+
+  // Helper function to close modals and clear errors
+  const closeCreateModal = () => {
+      setIsCreateOpen(false);
+      setFormErrors({});
+  };
+
+  const closeEditModal = () => {
+      setTaskToEdit(null);
+      setFormErrors({});
   };
 
   return (
@@ -117,13 +149,24 @@ export default function App() {
       </div>
 
       {/* --- MODALS --- */}
-      <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="Create a New Task">
-        <TaskForm onSubmit={handleCreate} onCancel={() => setIsCreateOpen(false)} isUpdate={false} />
+      <Modal isOpen={isCreateOpen} onClose={closeCreateModal} title="Create a New Task">
+        <TaskForm 
+            onSubmit={handleCreate} 
+            onCancel={closeCreateModal} 
+            isUpdate={false} 
+            errors={formErrors} // <-- THIS IS THE MAGIC PIECE THAT WAS MISSING!
+        />
       </Modal>
 
-      <Modal isOpen={!!taskToEdit} onClose={() => setTaskToEdit(null)} title="Update Task">
+      <Modal isOpen={!!taskToEdit} onClose={closeEditModal} title="Update Task">
         {taskToEdit && (
-          <TaskForm initialData={taskToEdit} onSubmit={handleUpdate} onCancel={() => setTaskToEdit(null)} isUpdate={true} />
+          <TaskForm 
+            initialData={taskToEdit} 
+            onSubmit={handleUpdate} 
+            onCancel={closeEditModal} 
+            isUpdate={true} 
+            errors={formErrors} // <-- AND HERE TOO!
+          />
         )}
       </Modal>
 
