@@ -46,9 +46,18 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskDto>> listTasks(){
+    public ResponseEntity<List<TaskDto>> listTasks(
+            @RequestParam(required = false) String search
+    ){
 
-        List<Task> tasks = taskService.listTasks();
+        List<Task> tasks;
+
+        if(search != null && !search.trim().isEmpty()){
+            tasks = taskService.searchTasks(search);
+        }
+        else {
+            tasks = taskService.listTasks();
+        }
 
         List<TaskDto> taskDtoList = tasks.stream()
                 .map(taskMapper::toDto)

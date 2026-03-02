@@ -65,4 +65,9 @@ public class TaskServiceImpl implements TaskService {
     public void deleteTask(UUID taskId) {
         taskRepository.deleteById(taskId);
     }
+
+    @Override
+    public List<Task> searchTasks(String keyword) {
+        return taskRepository.findByTitleContainingIgnoreCase(keyword);
+    }
 }

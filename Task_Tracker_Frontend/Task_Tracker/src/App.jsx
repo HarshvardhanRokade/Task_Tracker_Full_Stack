@@ -4,6 +4,7 @@ import { FiPlus } from 'react-icons/fi';
 import TaskCard from './components/TaskCard';
 import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
+import SearchBar from './components/SearchBar';
 
 // Make sure this matches your Spring Boot URL exactly!
 const API_URL = 'http://localhost:8080/api/v1/tasks'; 
@@ -18,10 +19,13 @@ export default function App() {
   
   // State to hold validation errors
   const [formErrors , setFormErrors] = useState({});
+  const [searchQuery , setSearchQuery] = useState("");
 
   const fetchTasks = async () => {
     try {
-      const response = await axios.get(API_URL);
+      const response = await axios.get(API_URL ,{
+        params: {search: searchQuery}
+      });
       setTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -29,8 +33,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchTasks(); 
-  }, []);
+    fetchTasks();    
+  }, [searchQuery]);
 
   const handleCreate = async (newTaskData) => {
     setFormErrors({});
@@ -117,6 +121,12 @@ export default function App() {
             {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
           </span>
         </div>
+
+
+        <SearchBar
+          value ={searchQuery}
+          onChange ={setSearchQuery}
+        />
 
         <div className="flex flex-col border border-gray-800 rounded-lg overflow-hidden bg-[#0a0a0a] shadow-xl">
           {tasks.map(task => (
