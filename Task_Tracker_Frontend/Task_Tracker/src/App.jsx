@@ -5,6 +5,7 @@ import TaskCard from './components/TaskCard';
 import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
 import SearchBar from './components/SearchBar';
+import TaskFilters from './components/TaskFilters';
 
 // Make sure this matches your Spring Boot URL exactly!
 const API_URL = 'http://localhost:8080/api/v1/tasks'; 
@@ -20,11 +21,17 @@ export default function App() {
   // State to hold validation errors
   const [formErrors , setFormErrors] = useState({});
   const [searchQuery , setSearchQuery] = useState("");
+  const [filterStatus , setFilterStatus] = useState("");
+  const [filterPriority , setFilterPriority] = useState("");
 
   const fetchTasks = async () => {
     try {
       const response = await axios.get(API_URL ,{
-        params: {search: searchQuery}
+        params: {
+          search: searchQuery || undefined,
+          status: filterStatus || undefined,
+          priority: filterPriority || undefined
+        }
       });
       setTasks(response.data);
     } catch (error) {
@@ -34,7 +41,7 @@ export default function App() {
 
   useEffect(() => {
     fetchTasks();    
-  }, [searchQuery]);
+  }, [searchQuery , filterStatus , filterPriority]);
 
   const handleCreate = async (newTaskData) => {
     setFormErrors({});
@@ -123,9 +130,13 @@ export default function App() {
         </div>
 
 
-        <SearchBar
-          value ={searchQuery}
-          onChange ={setSearchQuery}
+        <TaskFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
+          filterPriority={filterPriority}
+          setFilterPriority={setFilterPriority}
         />
 
         <div className="flex flex-col border border-gray-800 rounded-lg overflow-hidden bg-[#0a0a0a] shadow-xl">

@@ -6,6 +6,8 @@ import com.harsh.task.domain.dto.CreateTaskRequestDto;
 import com.harsh.task.domain.dto.TaskDto;
 import com.harsh.task.domain.dto.UpdateTaskRequestDto;
 import com.harsh.task.entity.Task;
+import com.harsh.task.entity.TaskPriority;
+import com.harsh.task.entity.TaskStatus;
 import com.harsh.task.mapper.TaskMapper;
 import com.harsh.task.service.TaskService;
 import jakarta.validation.Valid;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,17 +50,14 @@ public class TaskController {
 
     @GetMapping
     public ResponseEntity<List<TaskDto>> listTasks(
-            @RequestParam(required = false) String search
-    ){
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority
+            ){
 
-        List<Task> tasks;
+        List<Task> tasks = taskService.filterTasks(search , status , priority);
 
-        if(search != null && !search.trim().isEmpty()){
-            tasks = taskService.searchTasks(search);
-        }
-        else {
-            tasks = taskService.listTasks();
-        }
+        tasks.sort(Comparator.comparing(Task::getDueDate , Comparator.nullsLast(Comparator.naturalOrder())));
 
         List<TaskDto> taskDtoList = tasks.stream()
                 .map(taskMapper::toDto)

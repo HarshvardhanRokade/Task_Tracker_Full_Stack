@@ -3,6 +3,7 @@ package com.harsh.task.service.impl;
 import com.harsh.task.domain.CreateTaskRequest;
 import com.harsh.task.domain.UpdateTaskRequest;
 import com.harsh.task.entity.Task;
+import com.harsh.task.entity.TaskPriority;
 import com.harsh.task.entity.TaskStatus;
 import com.harsh.task.exception.TaskNotFoundException;
 import com.harsh.task.repository.TaskRepository;
@@ -67,7 +68,9 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<Task> searchTasks(String keyword) {
-        return taskRepository.findByTitleContainingIgnoreCase(keyword);
+    public List<Task> filterTasks(String search, TaskStatus status, TaskPriority priority) {
+        return taskRepository.filterTasks(search , status , priority);
     }
+
+
 }
