@@ -4,8 +4,8 @@ import { FiPlus } from 'react-icons/fi';
 import TaskCard from './components/TaskCard';
 import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
-import SearchBar from './components/SearchBar';
 import TaskFilters from './components/TaskFilters';
+import DashboardStats from './components/DashboardStats';
 
 // Make sure this matches your Spring Boot URL exactly!
 const API_URL = 'http://localhost:8080/api/v1/tasks'; 
@@ -129,6 +129,7 @@ export default function App() {
           </span>
         </div>
 
+        <DashboardStats tasks={tasks}/>
 
         <TaskFilters
           searchQuery={searchQuery}

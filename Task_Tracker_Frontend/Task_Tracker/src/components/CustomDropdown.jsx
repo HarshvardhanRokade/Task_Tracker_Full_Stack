@@ -21,7 +21,7 @@ export default function CustomDropdown({ value, onChange, options, placeholder }
 
     return (
         <div className="relative min-w-[150px] z-20" ref={dropdownRef}>
-            
+
             {/* 1. The Trigger Button */}
             <button
                 type="button"
@@ -32,8 +32,8 @@ export default function CustomDropdown({ value, onChange, options, placeholder }
                 <span className={value ? "text-white" : "text-gray-400"}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
-                <FiChevronDown 
-                    className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-500' : ''}`} 
+                <FiChevronDown
+                    className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-500' : ''}`}
                     size={20}
                 />
             </button>
@@ -42,7 +42,7 @@ export default function CustomDropdown({ value, onChange, options, placeholder }
             {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-[#121212] border border-gray-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <ul className="py-1 max-h-60 overflow-y-auto">
-                        
+
                         {/* The "All" Option (Clears the filter) */}
                         <li
                             onClick={() => { onChange(""); setIsOpen(false); }}
