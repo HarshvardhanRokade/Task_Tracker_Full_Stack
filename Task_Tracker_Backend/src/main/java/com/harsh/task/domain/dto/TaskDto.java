@@ -12,6 +12,7 @@ public record TaskDto(
         String description,
         LocalDate dueDate,
         TaskStatus status,
-        TaskPriority priority
+        TaskPriority priority,
+        Integer pomodoroCount
 ) {
 }

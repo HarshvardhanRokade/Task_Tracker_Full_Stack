@@ -1,18 +1,18 @@
 import React from "react";
 import { FiCalendar, FiCheck, FiDelete, FiEdit, FiFlag } from "react-icons/fi";
 
-export default function TaskCard({task , onEdit , onDelete , onToggleStatus}){
+export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
 
     const isComplete = task.status === 'COMPLETE'
 
-    return(
+    return (
         <div className="flex items-center justify-between p-4 border-b border-gray-800 hover:bg-[#121212] transition-colors">
             <div className="flex items-start gap-4">
                 <button
-                    onClick={() => onToggleStatus(task.id , isComplete ? 'OPEN' : 'COMPLETE')}
-                    className={`mt-1 flex-shrink-0 w-5 h-5 rounded border ${ isComplete ? "bg-green-500 border-green-500" : "border-gray-500"} flex items-center justify-center transition`}
+                    onClick={() => onToggleStatus(task.id, isComplete ? 'OPEN' : 'COMPLETE')}
+                    className={`mt-1 flex-shrink-0 w-5 h-5 rounded border ${isComplete ? "bg-green-500 border-green-500" : "border-gray-500"} flex items-center justify-center transition`}
                 >
-                    {isComplete && <FiCheck size={14} className="text-[#0a0a0a] font-bold"/>}
+                    {isComplete && <FiCheck size={14} className="text-[#0a0a0a] font-bold" />}
                 </button>
 
                 <div>
@@ -25,11 +25,16 @@ export default function TaskCard({task , onEdit , onDelete , onToggleStatus}){
 
                     <div className="flex items-center gap-4 mt-2 text-xs text-gray-400 font-medium">
                         <span className="flex items-center gap-1.5 uppercase">
-                            <FiFlag size={12}/> {task.priority}
+                            <FiFlag size={12} /> {task.priority}
                         </span>
                         {task.dueDate && (
                             <span className="flex items-center gap-1.5">
-                                <FiCalendar size={12}/> {task.dueDate}
+                                <FiCalendar size={12} /> {task.dueDate}
+                            </span>
+                        )}
+                        {task.pomodoroCount > 0 && (
+                            <span className="flex items-center gap-1 text-xs font-bold text-red-400 bg-red-400/10 px-2.5 py-1 rounded-full border border-red-500/20">
+                                🍅 {task.pomodoroCount}
                             </span>
                         )}
                     </div>
@@ -41,7 +46,7 @@ export default function TaskCard({task , onEdit , onDelete , onToggleStatus}){
                     onClick={() => onEdit(task)}
                     className="p-2 border border-gray-800 rounded text-gray-400 hover:text-blue-500 hover:border-blue-900 transition"
                 >
-                    <FiEdit size={16}/>
+                    <FiEdit size={16} />
                 </button>
 
                 <button

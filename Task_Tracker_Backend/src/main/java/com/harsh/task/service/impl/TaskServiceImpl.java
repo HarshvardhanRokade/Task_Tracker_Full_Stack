@@ -2,6 +2,7 @@ package com.harsh.task.service.impl;
 
 import com.harsh.task.domain.CreateTaskRequest;
 import com.harsh.task.domain.UpdateTaskRequest;
+import com.harsh.task.domain.dto.TaskDto;
 import com.harsh.task.entity.Task;
 import com.harsh.task.entity.TaskPriority;
 import com.harsh.task.entity.TaskStatus;
@@ -36,7 +37,8 @@ public class TaskServiceImpl implements TaskService {
                 TaskStatus.OPEN,
                 request.priority(),
                 now,
-                now
+                now,
+                0
         );
 
         return taskRepository.save(newTask);
@@ -70,6 +72,18 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<Task> filterTasks(String search, TaskStatus status, TaskPriority priority) {
         return taskRepository.filterTasks(search , status , priority);
+    }
+
+    @Override
+    public Task completePomodoro(UUID taskId) {
+
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("Task not found with id: " + taskId));
+
+        int currentCount = task.getPomodoroCount() == null ? 0 : task.getPomodoroCount();
+        task.setPomodoroCount(currentCount + 1);
+
+        return taskRepository.save(task);
     }
 
 

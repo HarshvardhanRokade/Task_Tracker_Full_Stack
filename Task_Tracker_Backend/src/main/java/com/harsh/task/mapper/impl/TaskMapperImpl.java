@@ -34,7 +34,8 @@ public class TaskMapperImpl implements TaskMapper {
                 task.getDescription(),
                 task.getDueDate(),
                 task.getStatus(),
-                task.getPriority()
+                task.getPriority(),
+                task.getPomodoroCount()
         );
     }
 

@@ -6,6 +6,7 @@ import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
 import TaskFilters from './components/TaskFilters';
 import DashboardStats from './components/DashboardStats';
+import PomodoroTimer from './components/PomodoroTimer';
 
 // Make sure this matches your Spring Boot URL exactly!
 const API_URL = 'http://localhost:8080/api/v1/tasks'; 
@@ -107,6 +108,17 @@ export default function App() {
     }
   };
 
+  const handleCompletePomodoro = async(taskId) => {
+    if(!taskId) return;
+
+    try{
+      await axios.post(`${API_URL}/${taskId}/pomodoro`);
+      fetchTasks();
+    }catch(error){
+      console.error("Error catching Pomodoro:" , error)
+    }
+  }
+
   // Helper function to close modals and clear errors
   const closeCreateModal = () => {
       setIsCreateOpen(false);
@@ -130,6 +142,11 @@ export default function App() {
         </div>
 
         <DashboardStats tasks={tasks}/>
+
+        <PomodoroTimer 
+          tasks={tasks.filter(t => t.status === 'OPEN')}
+          onPomodoroComplete={handleCompletePomodoro}
+        />
 
         <TaskFilters
           searchQuery={searchQuery}

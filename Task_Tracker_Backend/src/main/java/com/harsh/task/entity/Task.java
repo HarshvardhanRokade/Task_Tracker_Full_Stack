@@ -49,4 +49,7 @@ public class Task {
 
     @Column(name = "updated" , nullable = false)
     private Instant updated;
+
+    @Column(name = "pomodoro_count" , nullable = false)
+    private Integer pomodoroCount = 0;
 }

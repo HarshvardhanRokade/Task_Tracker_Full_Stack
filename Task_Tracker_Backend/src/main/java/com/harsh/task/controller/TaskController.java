@@ -33,6 +33,8 @@ public class TaskController {
         this.taskMapper = taskMapper;
     }
 
+
+
     @PostMapping
     public ResponseEntity<TaskDto> createTask(
             @Valid
@@ -47,6 +49,8 @@ public class TaskController {
 
         return new ResponseEntity<>(createdTaskDto , HttpStatus.CREATED);
     }
+
+
 
     @GetMapping
     public ResponseEntity<List<TaskDto>> listTasks(
@@ -66,6 +70,8 @@ public class TaskController {
         return new ResponseEntity<>(taskDtoList , HttpStatus.OK);
     }
 
+
+
     @PutMapping(path = "/{taskId}")
     public ResponseEntity<TaskDto> updateTask(
             @PathVariable UUID taskId,
@@ -82,6 +88,8 @@ public class TaskController {
         return new ResponseEntity<>(taskMapperDto , HttpStatus.OK);
     }
 
+
+
     @DeleteMapping(path = "/{taskId}")
     public ResponseEntity<Void> deleteTask (
             @PathVariable UUID taskId
@@ -89,5 +97,16 @@ public class TaskController {
         taskService.deleteTask(taskId);
 
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+
+    @PostMapping(path = "/{taskId}/pomodoro")
+    public ResponseEntity<TaskDto> completePomodoro(@PathVariable UUID taskId){
+
+        Task updatedTask = taskService.completePomodoro(taskId);
+
+        TaskDto taskDto = taskMapper.toDto(updatedTask);
+
+        return new ResponseEntity<>(taskDto , HttpStatus.OK);
     }
 }
