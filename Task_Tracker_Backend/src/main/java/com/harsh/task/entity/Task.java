@@ -52,4 +52,16 @@ public class Task {
 
     @Column(name = "pomodoro_count" , nullable = false)
     private Integer pomodoroCount = 0;
+
+    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @JoinTable(
+            name = "task_tags",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private java.util.Set<Tag> tags = new java.util.HashSet<>();
+
+
 }

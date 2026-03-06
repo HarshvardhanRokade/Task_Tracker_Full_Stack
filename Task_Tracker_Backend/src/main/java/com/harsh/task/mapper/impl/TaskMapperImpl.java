@@ -3,11 +3,14 @@ package com.harsh.task.mapper.impl;
 import com.harsh.task.domain.CreateTaskRequest;
 import com.harsh.task.domain.UpdateTaskRequest;
 import com.harsh.task.domain.dto.CreateTaskRequestDto;
+import com.harsh.task.domain.dto.TagDto;
 import com.harsh.task.domain.dto.TaskDto;
 import com.harsh.task.domain.dto.UpdateTaskRequestDto;
 import com.harsh.task.entity.Task;
 import com.harsh.task.mapper.TaskMapper;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class TaskMapperImpl implements TaskMapper {
@@ -18,7 +21,8 @@ public class TaskMapperImpl implements TaskMapper {
                 dto.title(),
                 dto.description(),
                 dto.dueDate(),
-                dto.priority()
+                dto.priority(),
+                dto.tags()
         );
     }
 
@@ -28,6 +32,10 @@ public class TaskMapperImpl implements TaskMapper {
             return null;
         }
 
+        List<TagDto> tagDtos = task.getTags().stream()
+                .map(tag -> new TagDto(tag.getId(), tag.getName(), tag.getColor()))
+                .toList();
+
         return new TaskDto(
                 task.getId(),
                 task.getTitle(),
@@ -35,7 +43,8 @@ public class TaskMapperImpl implements TaskMapper {
                 task.getDueDate(),
                 task.getStatus(),
                 task.getPriority(),
-                task.getPomodoroCount()
+                task.getPomodoroCount(),
+                tagDtos
         );
     }
 
@@ -46,7 +55,8 @@ public class TaskMapperImpl implements TaskMapper {
                 dto.description(),
                 dto.dueDate(),
                 dto.status(),
-                dto.priority()
+                dto.priority(),
+                dto.tags()
         );
     }
 }

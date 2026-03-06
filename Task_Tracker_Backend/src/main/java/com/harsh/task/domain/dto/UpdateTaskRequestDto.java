@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record UpdateTaskRequestDto (
         @NotBlank(message = ERROR_MESSAGE_TITLE_LENGTH)
@@ -27,7 +28,10 @@ public record UpdateTaskRequestDto (
         TaskStatus status,
 
         @NotNull(message = ERROR_MESSAGE_PRIORITY)
-        TaskPriority priority
+        TaskPriority priority,
+
+        @Nullable
+        List<String> tags
 ) {
 
     private static final String ERROR_MESSAGE_TITLE_LENGTH =

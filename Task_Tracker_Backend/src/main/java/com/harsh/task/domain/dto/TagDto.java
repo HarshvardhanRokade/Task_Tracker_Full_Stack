@@ -1,4 +1,10 @@
 package com.harsh.task.domain.dto;
 
-public class TagDto {
+import java.util.UUID;
+
+public record TagDto (
+        UUID id,
+        String name,
+        String color
+){
 }

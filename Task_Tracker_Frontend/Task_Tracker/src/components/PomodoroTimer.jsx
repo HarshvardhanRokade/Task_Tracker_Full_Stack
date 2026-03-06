@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlay, FiPause, FiRefreshCw, FiCoffee, FiBriefcase, FiInfo, FiX } from 'react-icons/fi';
-
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const WORK_TIME = 25 * 60; 
 const BREAK_TIME = 5 * 60; 
 
@@ -30,11 +31,11 @@ export default function PomodoroTimer({ tasks = [], onPomodoroComplete }) {
                 }
                 setMode('break');
                 setTimeLeft(BREAK_TIME);
-                alert("Pomodoro finished! Time for a short break.");
+                toast.success("Pomodoro finished! Time for a short break.");
             } else {
                 setMode('work');
                 setTimeLeft(WORK_TIME);
-                alert("Break is over! Time to get back to work.");
+                toast.error("Break is over! Time to get back to work.");
             }
         }
 
@@ -133,6 +134,7 @@ export default function PomodoroTimer({ tasks = [], onPomodoroComplete }) {
                     </button>
                 </div>
             </div>
+            <ToastContainer position="top-center" autoClose={3000} />
         </div>
     );
 }

@@ -19,6 +19,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
+  const [filterTag , setFilterTag] = useState("");
 
   const fetchTasks = async () => {
     try {
@@ -39,44 +40,79 @@ export default function App() {
     fetchTasks();
   }, [searchQuery, filterStatus, filterPriority]);
 
-  const handleCreate = async (newTaskData) => { 
-      setFormErrors({});
-      try {
-        await axios.post(API_URL, newTaskData);
-        setIsCreateOpen(false);
-        fetchTasks();
-      } catch (error) {
-        if (error.response && error.response.status === 400) setFormErrors(error.response.data);
-      }
+  const handleCreate = async (newTaskData) => {
+    setFormErrors({});
+    try {
+      await axios.post(API_URL, newTaskData);
+      setIsCreateOpen(false);
+      fetchTasks();
+    } catch (error) {
+      if (error.response && error.response.status === 400) setFormErrors(error.response.data);
+    }
   };
 
-  const handleUpdate = async (updatedTaskData) => { 
-      setFormErrors({});
-      try {
-        await axios.put(`${API_URL}/${taskToEdit.id}`, updatedTaskData);
-        setTaskToEdit(null);
-        fetchTasks();
-      } catch (error) {
-         if (error.response && error.response.status === 400) setFormErrors(error.response.data); 
+  const handleUpdate = async (updatedTaskData) => {
+    setFormErrors({});
+    try {
+      // ✨ THE FIX: Merge the existing task data (which has the status!) 
+      // with the new data from the form (which has our new tags array!)
+      const payload = {
+        ...taskToEdit,      // Brings in the existing 'status'
+        ...updatedTaskData  // Overwrites with the new title, tags, etc. from the form
+      };
+
+      await axios.put(`${API_URL}/${taskToEdit.id}`, payload);
+
+      setTaskToEdit(null);
+      fetchTasks();
+    } catch (error) {
+      console.error("Update failed:", error);
+      if (error.response && error.response.status === 400) {
+        setFormErrors(error.response.data);
       }
+    }
+  };
+  
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`${API_URL}/${taskToDelete.id}`);
+      setTaskToDelete(null);
+      fetchTasks();
+    } catch (error) {
+      console.error("Failed to delete:", error)
+    }
   };
 
-  const handleDelete = async () => { 
-      try {
-        await axios.delete(`${API_URL}/${taskToDelete.id}`);
-        setTaskToDelete(null);
-        fetchTasks();
-      } catch (error) {}
-  };
+  const handleToggleStatus = async (id, newStatus) => {
+    const taskToUpdate = tasks.find(t => t.id === id);
+    if (!taskToUpdate) return;
 
-  const handleToggleStatus = async (id, newStatus) => { 
-      const taskToUpdate = tasks.find(t => t.id === id);
-      if (taskToUpdate) {
-        try {
-          await axios.put(`${API_URL}/${id}`, { ...taskToUpdate, status: newStatus });
-          fetchTasks();
-        } catch (error) {}
-      }
+    // ✨ 1. OPTIMISTIC UPDATE: Instantly update the UI before the server even replies!
+    setTasks(prevTasks =>
+      prevTasks.map(task =>
+        task.id === id ? { ...task, status: newStatus } : task
+      )
+    );
+
+    // 2. Extract just the names from the tag objects for Spring Boot
+    const tagNames = taskToUpdate.tags ? taskToUpdate.tags.map(tag => tag.name) : [];
+
+    try {
+      // 3. Silently update the backend in the background
+      await axios.put(`${API_URL}/${id}`, {
+        ...taskToUpdate,
+        status: newStatus,
+        tags: tagNames
+      });
+
+      // Notice we removed fetchTasks() here! We don't need to download 
+      // the list again because our local React state is already correct.
+
+    } catch (error) {
+      console.error("Failed to update status on server:", error);
+      // 4. THE ROLLBACK: If the server crashed, fetch the real data to fix the UI
+      fetchTasks();
+    }
   };
 
   const handleCompletePomodoro = async (taskId) => {
@@ -92,6 +128,17 @@ export default function App() {
   const closeCreateModal = () => { setIsCreateOpen(false); setFormErrors({}); };
   const closeEditModal = () => { setTaskToEdit(null); setFormErrors({}); };
 
+  // ✨ NEW: Extract unique tags from all tasks for the dropdown
+  const availableTags = Array.from(
+    new Set(tasks.flatMap(task => task.tags?.map(t => t.name) || []))
+  ).sort();
+
+  // ✨ NEW: Apply the client-side tag filter
+  const displayedTasks = tasks.filter(task => {
+    if (filterTag && (!task.tags || !task.tags.some(t => t.name === filterTag))) return false;
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
       <div className="max-w-7xl mx-auto pt-8 px-6 pb-24">
@@ -104,7 +151,7 @@ export default function App() {
 
         {/* --- THE MAIN DASHBOARD GRID --- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          
+
           {/* LEFT: THE MAIN STAGE (Tasks & Filters - Takes up 8 of 12 columns) */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             <TaskFilters
@@ -114,10 +161,13 @@ export default function App() {
               setFilterStatus={setFilterStatus}
               filterPriority={filterPriority}
               setFilterPriority={setFilterPriority}
+              filterTag={filterTag}
+              setFilterTag={setFilterTag}
+              availableTags={availableTags}
             />
 
             <div className="flex flex-col border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a] shadow-xl">
-              {tasks.map(task => (
+              {displayedTasks.map(task => (
                 <TaskCard
                   key={task.id}
                   task={task}
@@ -126,7 +176,7 @@ export default function App() {
                   onToggleStatus={handleToggleStatus}
                 />
               ))}
-              {tasks.length === 0 && (
+              {displayedTasks.length === 0 && (
                 <div className="text-gray-500 text-center py-24 flex flex-col items-center">
                   <p className="text-lg font-medium text-gray-300">No tasks found</p>
                   <p className="text-sm mt-1">Adjust your filters or create a new task to get started.</p>
@@ -139,9 +189,9 @@ export default function App() {
           <div className="lg:col-span-4 relative">
             {/* The sticky container keeps the widgets on screen when scrolling down a long task list */}
             <div className="sticky top-8 flex flex-col gap-6">
-              
+
               <DashboardStats tasks={tasks} />
-              
+
               <PomodoroTimer
                 tasks={tasks.filter(t => t.status === 'OPEN')}
                 onPomodoroComplete={handleCompletePomodoro}
@@ -187,4 +237,4 @@ export default function App() {
 
     </div>
   );
-}
+}   

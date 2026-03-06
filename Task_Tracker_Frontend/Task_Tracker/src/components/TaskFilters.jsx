@@ -8,7 +8,10 @@ export default function TaskFilters({
     filterPriority, 
     setFilterPriority, 
     filterStatus, 
-    setFilterStatus 
+    setFilterStatus,
+    filterTag,
+    setFilterTag,
+    availableTags= []
 }) {
 
     // 2. Define our dropdown options as simple arrays
@@ -22,6 +25,11 @@ export default function TaskFilters({
         { value: 'OPEN', label: 'Open Tasks' },
         { value: 'COMPLETE', label: 'Completed' }
     ];
+
+    const tagOptions = availableTags.map((tag) => ({
+        value:tag,
+        label:`#${tag}`
+    }));
 
     return (
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -47,6 +55,13 @@ export default function TaskFilters({
                     onChange={setFilterStatus}
                     options={statusOptions}
                     placeholder="All Statuses"
+                />
+
+                <CustomDropdown 
+                    value={filterTag}
+                    onChange={setFilterTag}
+                    options={tagOptions}
+                    placeholder="All Tags"
                 />
             </div>
             

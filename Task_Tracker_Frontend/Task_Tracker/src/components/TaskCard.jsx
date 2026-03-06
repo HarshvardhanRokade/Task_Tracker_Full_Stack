@@ -1,5 +1,5 @@
 import React from "react";
-import { FiCalendar, FiCheck, FiDelete, FiEdit, FiFlag } from "react-icons/fi";
+import { FiCalendar, FiCheck, FiDelete, FiEdit, FiFlag, FiTag } from "react-icons/fi";
 
 export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
 
@@ -21,6 +21,24 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
                     </h3>
                     {task.description && (
                         <p className="text-sm text-gray-400 mt-0.5">{task.description}</p>
+                    )}
+
+                    {task.tags && task.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2.5">
+                            {task.tags.map(tag => (
+                                <span
+                                    key={tag.id}
+                                    className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-opacity-10"
+                                    style={{
+                                        color: tag.color,
+                                        borderColor: `${tag.color}40`, // 40 adds 25% opacity to the hex color
+                                        backgroundColor: `${tag.color}15` // 15 adds ~8% opacity
+                                    }}
+                                >
+                                    <FiTag size={10} /> {tag.name}
+                                </span>
+                            ))}
+                        </div>
                     )}
 
                     <div className="flex items-center gap-4 mt-2 text-xs text-gray-400 font-medium">
