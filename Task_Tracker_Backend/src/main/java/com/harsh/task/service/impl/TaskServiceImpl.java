@@ -11,6 +11,8 @@ import com.harsh.task.exception.TaskNotFoundException;
 import com.harsh.task.repository.TagRepository;
 import com.harsh.task.repository.TaskRepository;
 import com.harsh.task.service.TaskService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -53,8 +55,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<Task> listTasks() {
-        return taskRepository.findAll(Sort.by(Sort.Direction.ASC , "created"));
+    public Page<Task> listTasks(Pageable pageable) {
+        return taskRepository.findAll(pageable);
     }
 
     @Override
@@ -80,8 +82,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<Task> filterTasks(String search, TaskStatus status, TaskPriority priority) {
-        return taskRepository.filterTasks(search , status , priority);
+    public Page<Task> filterTasks(String search, TaskStatus status, TaskPriority priority , String tag ,Pageable pageable) {
+        return taskRepository.filterTasks(search , status , priority , tag ,pageable);
     }
 
     @Override

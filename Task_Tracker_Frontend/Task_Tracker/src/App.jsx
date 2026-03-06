@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { FiPlus } from 'react-icons/fi';
 import TaskCard from './components/TaskCard';
@@ -19,26 +19,56 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
-  const [filterTag , setFilterTag] = useState("");
+  const [filterTag, setFilterTag] = useState("");
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const observer = useRef();
 
-  const fetchTasks = async () => {
+  // ✨ UPDATED: Now accepts pageNumber and a reset flag
+  const fetchTasks = async (currentPage=0, shouldReset = true) => {
+    setIsLoading(true);
     try {
-      const response = await axios.get(API_URL, {
-        params: {
-          search: searchQuery || undefined,
-          status: filterStatus || undefined,
-          priority: filterPriority || undefined
-        }
+      // Build the exact URL with all our backend filters and pagination!
+      const params = new URLSearchParams({
+        page: currentPage,
+        size: 10
       });
-      setTasks(response.data);
+      if (searchQuery) params.append('search', searchQuery);
+      if (filterStatus) params.append('status', filterStatus);
+      if (filterPriority) params.append('priority', filterPriority);
+      if (filterTag) params.append('tag', filterTag);
+
+      const response = await axios.get(`${API_URL}?${params.toString()}`);
+
+      // Spring Boot hides the array inside "content" now!
+      const newTasks = response.data.content;
+
+      setTasks(prevTasks => {
+        if (shouldReset) return newTasks; // Overwrite if filters changed
+        return [...prevTasks, ...newTasks]; // Append if just scrolling down
+      });
+
+      // Spring Boot tells us if we hit the very last page!
+      setHasMore(!response.data.last);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
+      console.error("Failed to fetch tasks:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // Trigger 1: When the PAGE changes (scrolling down)
   useEffect(() => {
-    fetchTasks();
-  }, [searchQuery, filterStatus, filterPriority]);
+    if (page > 0) fetchTasks(page, false);
+  }, [page]);
+
+  // Trigger 2: When any FILTER changes (reset back to page 0)
+  useEffect(() => {
+    setPage(0);
+    fetchTasks(0, true);
+  }, [searchQuery, filterStatus, filterPriority, filterTag]);
+
 
   const handleCreate = async (newTaskData) => {
     setFormErrors({});
@@ -72,7 +102,7 @@ export default function App() {
       }
     }
   };
-  
+
   const handleDelete = async () => {
     try {
       await axios.delete(`${API_URL}/${taskToDelete.id}`);
@@ -133,11 +163,19 @@ export default function App() {
     new Set(tasks.flatMap(task => task.tags?.map(t => t.name) || []))
   ).sort();
 
-  // ✨ NEW: Apply the client-side tag filter
-  const displayedTasks = tasks.filter(task => {
-    if (filterTag && (!task.tags || !task.tags.some(t => t.name === filterTag))) return false;
-    return true;
-  });
+
+  const lastTaskElementRef = useCallback(node => {
+    if (isLoading) return;
+    if (observer.current) observer.current.disconnect();
+
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [isLoading, hasMore])
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
@@ -167,21 +205,49 @@ export default function App() {
             />
 
             <div className="flex flex-col border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a] shadow-xl">
-              {displayedTasks.map(task => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onEdit={setTaskToEdit}
-                  onDelete={setTaskToDelete}
-                  onToggleStatus={handleToggleStatus}
-                />
-              ))}
-              {displayedTasks.length === 0 && (
+
+              {/* ✨ UPDATED: Map over 'tasks' and attach the ref to the last one! */}
+              {tasks.map((task, index) => {
+                if (tasks.length === index + 1) {
+                  return (
+                    // Attach the Infinite Scroll trigger to this div!
+                    <div ref={lastTaskElementRef} key={task.id}>
+                      <TaskCard
+                        task={task}
+                        onEdit={setTaskToEdit}
+                        onDelete={setTaskToDelete}
+                        onToggleStatus={handleToggleStatus}
+                      />
+                    </div>
+                  );
+                } else {
+                  return (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onEdit={setTaskToEdit}
+                      onDelete={setTaskToDelete}
+                      onToggleStatus={handleToggleStatus}
+                    />
+                  );
+                }
+              })}
+
+              {/* ✨ NEW: Loading indicator for when you hit the bottom */}
+              {isLoading && (
+                <div className="text-center py-6 text-gray-500 text-sm font-medium border-t border-gray-800">
+                  Loading more tasks...
+                </div>
+              )}
+
+              {/* ✨ UPDATED: Empty state only shows if we are NOT loading */}
+              {tasks.length === 0 && !isLoading && (
                 <div className="text-gray-500 text-center py-24 flex flex-col items-center">
                   <p className="text-lg font-medium text-gray-300">No tasks found</p>
                   <p className="text-sm mt-1">Adjust your filters or create a new task to get started.</p>
                 </div>
               )}
+
             </div>
           </div>
 

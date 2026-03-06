@@ -11,6 +11,10 @@ import com.harsh.task.entity.TaskStatus;
 import com.harsh.task.mapper.TaskMapper;
 import com.harsh.task.service.TaskService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,21 +57,28 @@ public class TaskController {
 
 
     @GetMapping
-    public ResponseEntity<List<TaskDto>> listTasks(
+    public ResponseEntity<Page<TaskDto>> listTasks(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) TaskStatus status,
-            @RequestParam(required = false) TaskPriority priority
+            @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) String tag,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
             ){
 
-        List<Task> tasks = taskService.filterTasks(search , status , priority);
+        Pageable pageable = PageRequest.of(page , size , Sort.by(Sort.Direction.ASC , "created"));
 
-        tasks.sort(Comparator.comparing(Task::getDueDate , Comparator.nullsLast(Comparator.naturalOrder())));
+        Page<Task> taskPage;
+        if(search != null  ||  status != null  || priority != null  ||  tag != null){
+            taskPage = taskService.filterTasks(search , status , priority , tag , pageable);
+        }
+        else {
+            taskPage = taskService.listTasks(pageable);
+        }
 
-        List<TaskDto> taskDtoList = tasks.stream()
-                .map(taskMapper::toDto)
-                .toList();
+        Page<TaskDto> taskDtos = taskPage.map(taskMapper::toDto);
 
-        return new ResponseEntity<>(taskDtoList , HttpStatus.OK);
+        return ResponseEntity.ok(taskDtos);
     }
 
 
