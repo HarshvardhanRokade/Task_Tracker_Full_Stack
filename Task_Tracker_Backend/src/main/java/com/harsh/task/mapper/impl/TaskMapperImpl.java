@@ -21,6 +21,7 @@ public class TaskMapperImpl implements TaskMapper {
                 dto.title(),
                 dto.description(),
                 dto.dueDate(),
+                dto.reminderDateTime(),
                 dto.priority(),
                 dto.tags()
         );
@@ -41,6 +42,7 @@ public class TaskMapperImpl implements TaskMapper {
                 task.getTitle(),
                 task.getDescription(),
                 task.getDueDate(),
+                task.getReminderDateTime(),
                 task.getStatus(),
                 task.getPriority(),
                 task.getPomodoroCount(),
@@ -54,6 +56,7 @@ public class TaskMapperImpl implements TaskMapper {
                 dto.title(),
                 dto.description(),
                 dto.dueDate(),
+                dto.reminderDateTime(),
                 dto.status(),
                 dto.priority(),
                 dto.tags()

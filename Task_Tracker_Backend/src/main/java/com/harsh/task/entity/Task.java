@@ -8,6 +8,7 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -35,6 +36,12 @@ public class Task {
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "due_date")
     private LocalDate dueDate;
+
+    @Column(name = "reminder_date_time")
+    private LocalDateTime reminderDateTime;
+
+    @Column(name = "reminder_sent", nullable = false)
+    private boolean reminderSent = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status" , nullable = false)

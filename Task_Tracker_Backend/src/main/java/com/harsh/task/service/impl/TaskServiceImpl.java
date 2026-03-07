@@ -43,6 +43,8 @@ public class TaskServiceImpl implements TaskService {
                 request.title(),
                 request.description(),
                 request.dueDate(),
+                request.reminderDateTime(),
+                false,
                 TaskStatus.OPEN,
                 request.priority(),
                 now,
@@ -66,6 +68,10 @@ public class TaskServiceImpl implements TaskService {
         existingTask.setTitle(request.title());
         existingTask.setDescription(request.description());
         existingTask.setDueDate(request.dueDate());
+
+        existingTask.setReminderDateTime(request.reminderDateTime());
+        existingTask.setReminderSent(false);
+
         existingTask.setStatus(request.status());
         existingTask.setPriority(request.priority());
         existingTask.setUpdated(Instant.now());

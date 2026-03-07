@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record UpdateTaskRequestDto (
@@ -23,6 +24,10 @@ public record UpdateTaskRequestDto (
         @FutureOrPresent(message = ERROR_MESSAGE_DUE_DATE_FUTURE)
         @Nullable
         LocalDate dueDate,
+
+        @FutureOrPresent(message = ERROR_MESSAGE_REMINDER_DATE_FUTURE)
+        @Nullable
+        LocalDateTime reminderDateTime,
 
         @NotNull(message = ERROR_MESSAGE_STATUS)
         TaskStatus status,
@@ -42,6 +47,9 @@ public record UpdateTaskRequestDto (
 
     private static final String ERROR_MESSAGE_DUE_DATE_FUTURE =
             "Due date must be in future";
+
+    private static final String ERROR_MESSAGE_REMINDER_DATE_FUTURE =
+            "Reminder date and time must be in the future";
 
     private static final String ERROR_MESSAGE_STATUS =
             "Task status must be provided";

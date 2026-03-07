@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.w3c.dom.stylesheets.LinkStyle;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,4 +28,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             @Param("tag") String tag,
             Pageable pageable
     );
+
+    // ✨ NEW: Find tasks needing a reminder
+    List<Task> findByReminderDateTimeLessThanEqualAndReminderSentFalseAndStatus(LocalDateTime now, TaskStatus status);
 }
