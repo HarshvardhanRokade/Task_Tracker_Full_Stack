@@ -5,6 +5,7 @@ export default function TaskForm({ initialData = {}, onSubmit, onCancel, isUpdat
     const [title, setTitle] = useState(initialData.title || "");
     const [description, setDescription] = useState(initialData.description || "");
     const [dueDate, setDueDate] = useState(initialData.dueDate || "");
+    const [reminderDateTime , setReminderDateTime] = useState(initialData.reminderDateTime || "");
     const [priority, setPriority] = useState(initialData.priority || "MEDIUM");
     
     // ✨ NEW: State for our tags and the text currently being typed
@@ -27,6 +28,7 @@ export default function TaskForm({ initialData = {}, onSubmit, onCancel, isUpdat
             title, 
             description, 
             dueDate: dueDate || null, 
+            reminderDateTime: reminderDateTime || null,
             priority,
             tags 
         });
@@ -89,6 +91,17 @@ export default function TaskForm({ initialData = {}, onSubmit, onCancel, isUpdat
                         className="w-full bg-[#121212] border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 outline-none transition-colors color-scheme-dark"
                     />
                     {errors.dueDate && <p className="text-red-400 text-xs mt-1">{errors.dueDate}</p>}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1">Set Reminder</label>
+                    <input
+                        type="datetime-local"
+                        value={reminderDateTime}
+                        onChange={(e) => setReminderDateTime(e.target.value)}
+                        className="w-full bg-[#121212] border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:border-blue-500 outline-none transition-colors color-scheme-dark"
+                    />
+                    {errors.reminderDateTime && <p className="text-red-400 text-xs mt-1">{errors.reminderDateTime}</p>}
                 </div>
 
                 <div>
