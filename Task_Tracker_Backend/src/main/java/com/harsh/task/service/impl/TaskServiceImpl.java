@@ -127,5 +127,10 @@ public class TaskServiceImpl implements TaskService {
         return tags;
     }
 
+    @Override
+    public Task getTask(UUID taskId) {
+        return taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+    }
 
 }

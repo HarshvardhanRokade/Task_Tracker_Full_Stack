@@ -9,6 +9,7 @@ import com.harsh.task.entity.Task;
 import com.harsh.task.entity.TaskPriority;
 import com.harsh.task.entity.TaskStatus;
 import com.harsh.task.mapper.TaskMapper;
+import com.harsh.task.service.CalendarService;
 import com.harsh.task.service.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -32,9 +33,12 @@ public class TaskController {
 
     private final TaskMapper taskMapper;
 
-    public TaskController (TaskService taskService , TaskMapper taskMapper){
+    private final CalendarService calendarService;
+
+    public TaskController (TaskService taskService , TaskMapper taskMapper , CalendarService calendarService){
         this.taskService = taskService;
         this.taskMapper = taskMapper;
+        this.calendarService = calendarService;
     }
 
 
@@ -119,5 +123,18 @@ public class TaskController {
         TaskDto taskDto = taskMapper.toDto(updatedTask);
 
         return new ResponseEntity<>(taskDto , HttpStatus.OK);
+    }
+
+    @GetMapping(path = "/{taskId}/calendar")
+    public ResponseEntity<byte []> downloadCalendarEvent(@PathVariable UUID taskId){
+
+        Task task = taskService.getTask(taskId);
+        String icsContent = calendarService.generateIcsFile(task);
+        byte[] calendarBytes = icsContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"task-" + task.getTitle().replaceAll("[^a-zA-Z0-9.-]", "_") + ".ics\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/calendar")
+                .body(calendarBytes);
     }
 }

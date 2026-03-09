@@ -204,8 +204,8 @@ export default function App() {
               availableTags={availableTags}
             />
 
-            <div className="flex flex-col border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a] shadow-xl">
-
+            <div className="flex flex-col border border-gray-800 rounded-xl bg-[#0a0a0a] shadow-xl">
+              
               {/* ✨ UPDATED: Map over 'tasks' and attach the ref to the last one! */}
               {tasks.map((task, index) => {
                 if (tasks.length === index + 1) {

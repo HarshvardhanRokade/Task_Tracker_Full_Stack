@@ -25,4 +25,6 @@ public interface TaskService {
     Page<Task> filterTasks(String search , TaskStatus status , TaskPriority priority , String tag ,Pageable pageable);
 
     Task completePomodoro(UUID taskId);
+
+    Task getTask (UUID taskId);
 }
