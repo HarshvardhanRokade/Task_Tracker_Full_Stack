@@ -1,30 +1,20 @@
-import React, { useState, useRef, useEffect } from "react"; // ✨ NEW IMPORTS
+import React, { useState, useRef, useEffect } from "react";
 import { FiCalendar, FiCheck, FiDelete, FiEdit, FiFlag, FiTag } from "react-icons/fi";
 
 export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
     const [showCalendarMenu, setShowCalendarMenu] = useState(false);
-    
-    // ✨ NEW: Create a reference to our dropdown container
     const menuRef = useRef(null); 
-    
     const isComplete = task.status === 'COMPLETE';
 
-    // ✨ NEW: The "Click Outside" Listener
+    // ✨ IMPROVED: "Click Outside" Listener
     useEffect(() => {
         function handleClickOutside(event) {
-            // If the menu is open, and the user clicked something outside of 'menuRef', close it!
             if (menuRef.current && !menuRef.current.contains(event.target)) {
                 setShowCalendarMenu(false);
             }
         }
-
-        // Attach the listener to the whole document
         document.addEventListener("mousedown", handleClickOutside);
-        
-        // Clean up the listener when the component unmounts
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     const handleDownloadCalendar = async () => {
@@ -63,21 +53,24 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
     };
 
     return (
-        <div className="flex items-center justify-between p-4 border-b border-gray-800 hover:bg-[#121212] transition-colors">
+        <div className="group flex items-center justify-between p-4 md:p-5 border-b border-[#272757] hover:bg-[#272757]/50 transition-colors">
             <div className="flex items-start gap-4">
                 <button
                     onClick={() => onToggleStatus(task.id, isComplete ? 'OPEN' : 'COMPLETE')}
-                    className={`mt-1 flex-shrink-0 w-5 h-5 rounded border ${isComplete ? "bg-green-500 border-green-500" : "border-gray-500"} flex items-center justify-center transition`}
+                    className={`mt-1 flex-shrink-0 w-5 h-5 rounded border ${isComplete ? "bg-green-500 border-green-500" : "border-[#505081] group-hover:border-[#8686AC]"} flex items-center justify-center transition`}
                 >
-                    {isComplete && <FiCheck size={14} className="text-[#0a0a0a] font-bold" />}
+                    {isComplete && <FiCheck size={14} className="text-[#0F0E47] font-bold" />}
                 </button>
 
                 <div>
-                    <h3 className={`text-base font-medium ${isComplete ? "line-through text-gray-500" : "text-white"}`}>
+                    {/* Brightened Title */}
+                    <h3 className={`text-base font-medium ${isComplete ? "line-through text-[#8686AC] opacity-80" : "text-white group-hover:text-blue-50"}`}>
                         {task.title}
                     </h3>
+                    
+                    {/* Brightened Description */}
                     {task.description && (
-                        <p className="text-sm text-gray-400 mt-0.5">{task.description}</p>
+                        <p className="text-sm text-indigo-200/80 mt-0.5">{task.description}</p>
                     )}
 
                     {task.tags && task.tags.length > 0 && (
@@ -85,11 +78,11 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
                             {task.tags.map(tag => (
                                 <span
                                     key={tag.id}
-                                    className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-opacity-10"
+                                    className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border"
                                     style={{
                                         color: tag.color,
-                                        borderColor: `${tag.color}40`,
-                                        backgroundColor: `${tag.color}15` 
+                                        borderColor: `${tag.color}50`,
+                                        backgroundColor: `${tag.color}20` 
                                     }}
                                 >
                                     <FiTag size={10} /> {tag.name}
@@ -98,9 +91,10 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
                         </div>
                     )}
 
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-400 font-medium">
+                    {/* Meta Info */}
+                    <div className="flex items-center gap-4 mt-2 text-xs text-indigo-300/80 font-medium">
                         <span className="flex items-center gap-1.5 uppercase">
-                            <FiFlag size={12} /> {task.priority}
+                            <FiFlag size={12} className={task.priority === 'HIGH' ? 'text-red-400' : ''} /> {task.priority}
                         </span>
                         {task.dueDate && (
                             <span className="flex items-center gap-1.5">
@@ -116,31 +110,33 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200 ml-4 relative z-30">
                 
-                {/* ✨ TWEAK: Attached the menuRef here! */}
                 <div className="relative" ref={menuRef}>
                     <button 
-                        onClick={() => setShowCalendarMenu(!showCalendarMenu)}
-                        className="p-2 border border-gray-800 rounded text-gray-400 hover:text-green-500 hover:border-green-900 transition"
+                        onClick={(e) => {
+                            e.stopPropagation(); // Prevent card toggle
+                            setShowCalendarMenu(!showCalendarMenu);
+                        }}
+                        className="p-2 border border-[#272757] rounded text-[#8686AC] hover:text-green-400 hover:bg-[#272757] transition"
                         title="Add to Calendar"
                     >
                         <FiCalendar size={16} /> 
                     </button>
 
-                    {/* ✨ TWEAK: Changed positioning to top-full mt-2 and z-[100] */}
                     {showCalendarMenu && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-[#1e1e1e] border border-gray-700 rounded-lg shadow-xl z-[100] overflow-hidden">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-[#272757] border border-[#505081] rounded-lg shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                             <button 
-                                onClick={handleGoogleCalendar}
-                                className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
+                                onClick={(e) => { e.stopPropagation(); handleGoogleCalendar(); }}
+                                className="w-full text-left px-4 py-3 text-sm text-white hover:bg-[#505081] transition-colors flex items-center gap-2"
                             >
                                 🌐 Google Calendar
                             </button>
-                            <div className="border-t border-gray-700"></div>
+                            <div className="border-t border-[#505081]"></div>
                             <button 
-                                onClick={handleDownloadCalendar}
-                                className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
+                                onClick={(e) => { e.stopPropagation(); handleDownloadCalendar(); }}
+                                className="w-full text-left px-4 py-3 text-sm text-white hover:bg-[#505081] transition-colors flex items-center gap-2"
                             >
                                 💻 Apple / Outlook
                             </button>
@@ -148,16 +144,16 @@ export default function TaskCard({ task, onEdit, onDelete, onToggleStatus }) {
                     )}
                 </div>
 
-                <button
-                    onClick={() => onEdit(task)}
-                    className="p-2 border border-gray-800 rounded text-gray-400 hover:text-blue-500 hover:border-blue-900 transition"
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onEdit(task); }} 
+                    className="p-2 border border-[#272757] rounded text-[#8686AC] hover:text-blue-400 hover:bg-[#272757] transition"
                 >
                     <FiEdit size={16} />
                 </button>
 
-                <button
-                    onClick={() => onDelete(task)}
-                    className="p-2 border rounded border-gray-800 text-gray-400 hover:text-red-500 hover:border-red-800 transition"
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onDelete(task); }} 
+                    className="p-2 border border-[#272757] rounded text-[#8686AC] hover:text-red-400 hover:bg-[#272757] transition"
                 >
                     <FiDelete size={16} />
                 </button>

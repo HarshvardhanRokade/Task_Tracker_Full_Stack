@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom'; // ✨ NEW
 import axios from 'axios';
 import { FiPlus } from 'react-icons/fi';
-import TaskCard from './components/TaskCard';
+
 import Modal from './components/Modal';
 import TaskForm from './components/TaskForm';
-import TaskFilters from './components/TaskFilters';
-import DashboardStats from './components/DashboardStats';
-import PomodoroTimer from './components/PomodoroTimer';
+import Sidebar from './components/Sidebar'; // ✨ NEW
+
+// We will create these pages next!
+import TasksPage from './pages/TasksPage';
+import FocusPage from './pages/FocusPage';
+import DashboardPage from './pages/DashboardPage';
 
 const API_URL = 'http://localhost:8080/api/v1/tasks';
 
 export default function App() {
+  // --- ALL YOUR EXISTING LOGIC STAYS EXACTLY THE SAME ---
   const [tasks, setTasks] = useState([]);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
@@ -21,35 +26,27 @@ export default function App() {
   const [filterPriority, setFilterPriority] = useState("");
   const [filterTag, setFilterTag] = useState("");
   const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const observer = useRef();
 
-  // ✨ UPDATED: Now accepts pageNumber and a reset flag
   const fetchTasks = async (currentPage=0, shouldReset = true) => {
     setIsLoading(true);
     try {
-      // Build the exact URL with all our backend filters and pagination!
-      const params = new URLSearchParams({
-        page: currentPage,
-        size: 10
-      });
+      const params = new URLSearchParams({ page: currentPage, size: 10 });
       if (searchQuery) params.append('search', searchQuery);
       if (filterStatus) params.append('status', filterStatus);
       if (filterPriority) params.append('priority', filterPriority);
       if (filterTag) params.append('tag', filterTag);
 
       const response = await axios.get(`${API_URL}?${params.toString()}`);
-
-      // Spring Boot hides the array inside "content" now!
       const newTasks = response.data.content;
 
       setTasks(prevTasks => {
-        if (shouldReset) return newTasks; // Overwrite if filters changed
-        return [...prevTasks, ...newTasks]; // Append if just scrolling down
+        if (shouldReset) return newTasks;
+        return [...prevTasks, ...newTasks];
       });
 
-      // Spring Boot tells us if we hit the very last page!
       setHasMore(!response.data.last);
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
@@ -58,17 +55,14 @@ export default function App() {
     }
   };
 
-  // Trigger 1: When the PAGE changes (scrolling down)
   useEffect(() => {
     if (page > 0) fetchTasks(page, false);
   }, [page]);
 
-  // Trigger 2: When any FILTER changes (reset back to page 0)
   useEffect(() => {
     setPage(0);
     fetchTasks(0, true);
   }, [searchQuery, filterStatus, filterPriority, filterTag]);
-
 
   const handleCreate = async (newTaskData) => {
     setFormErrors({});
@@ -84,22 +78,12 @@ export default function App() {
   const handleUpdate = async (updatedTaskData) => {
     setFormErrors({});
     try {
-      // ✨ THE FIX: Merge the existing task data (which has the status!) 
-      // with the new data from the form (which has our new tags array!)
-      const payload = {
-        ...taskToEdit,      // Brings in the existing 'status'
-        ...updatedTaskData  // Overwrites with the new title, tags, etc. from the form
-      };
-
+      const payload = { ...taskToEdit, ...updatedTaskData };
       await axios.put(`${API_URL}/${taskToEdit.id}`, payload);
-
       setTaskToEdit(null);
       fetchTasks();
     } catch (error) {
-      console.error("Update failed:", error);
-      if (error.response && error.response.status === 400) {
-        setFormErrors(error.response.data);
-      }
+      if (error.response && error.response.status === 400) setFormErrors(error.response.data);
     }
   };
 
@@ -114,26 +98,11 @@ export default function App() {
   };
 
   const handleToggleStatus = async (id, newStatus) => {
-    // 1. OPTIMISTIC UPDATE: Instantly update the UI
-    setTasks(prevTasks =>
-      prevTasks.map(task =>
-        task.id === id ? { ...task, status: newStatus } : task
-      )
-    );
-
+    setTasks(prevTasks => prevTasks.map(task => task.id === id ? { ...task, status: newStatus } : task));
     try {
-      // ✨ THE FIX: Hit the new dedicated endpoint! 
-      // We don't send a body anymore, just the status in the URL query.
       await axios.put(`${API_URL}/${id}/status?status=${newStatus}`);
-
     } catch (error) {
-      console.error("Failed to update status on server:", error);
-      
-      if (error.response && error.response.data) {
-          alert("Server Error:\n" + JSON.stringify(error.response.data, null, 2));
-      }
-      
-      // THE ROLLBACK: If the server crashed, fetch the real data to fix the UI
+      if (error.response && error.response.data) alert("Server Error:\n" + JSON.stringify(error.response.data, null, 2));
       fetchTasks();
     }
   };
@@ -151,129 +120,65 @@ export default function App() {
   const closeCreateModal = () => { setIsCreateOpen(false); setFormErrors({}); };
   const closeEditModal = () => { setTaskToEdit(null); setFormErrors({}); };
 
-  // ✨ NEW: Extract unique tags from all tasks for the dropdown
-  const availableTags = Array.from(
-    new Set(tasks.flatMap(task => task.tags?.map(t => t.name) || []))
-  ).sort();
-
+  const availableTags = Array.from(new Set(tasks.flatMap(task => task.tags?.map(t => t.name) || []))).sort();
 
   const lastTaskElementRef = useCallback(node => {
     if (isLoading) return;
     if (observer.current) observer.current.disconnect();
-
     observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prevPage => prevPage + 1);
-      }
+      if (entries[0].isIntersecting && hasMore) setPage(prevPage => prevPage + 1);
     });
-
     if (node) observer.current.observe(node);
-  }, [isLoading, hasMore])
+  }, [isLoading, hasMore]);
 
+  // --- ✨ THE NEW ROUTING UI SHELL ---
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
-      <div className="max-w-7xl mx-auto pt-8 px-6 pb-24">
+    <div className="min-h-screen bg-[#0F0E47] text-white flex selection:bg-[#505081]/50">
+      
+      {/* The Permanent Sidebar */}
+      <Sidebar />
 
-        {/* HEADER */}
-        <div className="border-b border-gray-800 pb-5 mb-8">
-          <h1 className="text-3xl font-bold tracking-tight mb-1">Workspace</h1>
-          <p className="text-sm text-gray-500">Manage your tasks and focus sessions.</p>
-        </div>
-
-        {/* --- THE MAIN DASHBOARD GRID --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-
-          {/* LEFT: THE MAIN STAGE (Tasks & Filters - Takes up 8 of 12 columns) */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            <TaskFilters
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              filterStatus={filterStatus}
-              setFilterStatus={setFilterStatus}
-              filterPriority={filterPriority}
-              setFilterPriority={setFilterPriority}
-              filterTag={filterTag}
-              setFilterTag={setFilterTag}
-              availableTags={availableTags}
-            />
-
-            <div className="flex flex-col border border-gray-800 rounded-xl bg-[#0a0a0a] shadow-xl">
-              
-              {/* ✨ UPDATED: Map over 'tasks' and attach the ref to the last one! */}
-              {tasks.map((task, index) => {
-                if (tasks.length === index + 1) {
-                  return (
-                    // Attach the Infinite Scroll trigger to this div!
-                    <div ref={lastTaskElementRef} key={task.id}>
-                      <TaskCard
-                        task={task}
-                        onEdit={setTaskToEdit}
-                        onDelete={setTaskToDelete}
-                        onToggleStatus={handleToggleStatus}
-                      />
-                    </div>
-                  );
-                } else {
-                  return (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      onEdit={setTaskToEdit}
-                      onDelete={setTaskToDelete}
-                      onToggleStatus={handleToggleStatus}
-                    />
-                  );
-                }
-              })}
-
-              {/* ✨ NEW: Loading indicator for when you hit the bottom */}
-              {isLoading && (
-                <div className="text-center py-6 text-gray-500 text-sm font-medium border-t border-gray-800">
-                  Loading more tasks...
-                </div>
-              )}
-
-              {/* ✨ UPDATED: Empty state only shows if we are NOT loading */}
-              {tasks.length === 0 && !isLoading && (
-                <div className="text-gray-500 text-center py-24 flex flex-col items-center">
-                  <p className="text-lg font-medium text-gray-300">No tasks found</p>
-                  <p className="text-sm mt-1">Adjust your filters or create a new task to get started.</p>
-                </div>
-              )}
-
-            </div>
-          </div>
-
-          {/* RIGHT: THE SIDEBAR (Stats & Timer - Takes up 4 of 12 columns) */}
-          <div className="lg:col-span-4 relative">
-            {/* The sticky container keeps the widgets on screen when scrolling down a long task list */}
-            <div className="sticky top-8 flex flex-col gap-6">
-
-              <DashboardStats tasks={tasks} />
-
-              <PomodoroTimer
-                tasks={tasks.filter(t => t.status === 'OPEN')}
-                onPomodoroComplete={handleCompletePomodoro}
+      {/* The Main Content Area (Pushed right by the 64-width sidebar) */}
+      <div className="flex-1 ml-64 p-8 md:p-12 h-screen overflow-y-auto no-scrollbar">
+        <div className="max-w-5xl mx-auto">
+          
+          <Routes>
+            <Route path="/" element={<Navigate to="/tasks" replace />} />
+            
+            <Route path="/tasks" element={
+              <TasksPage 
+                tasks={tasks}
+                searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                filterStatus={filterStatus} setFilterStatus={setFilterStatus}
+                filterPriority={filterPriority} setFilterPriority={setFilterPriority}
+                filterTag={filterTag} setFilterTag={setFilterTag}
+                availableTags={availableTags}
+                isLoading={isLoading}
+                lastTaskElementRef={lastTaskElementRef}
+                setTaskToEdit={setTaskToEdit}
+                setTaskToDelete={setTaskToDelete}
+                handleToggleStatus={handleToggleStatus}
               />
-
-            </div>
-          </div>
+            } />
+            
+            <Route path="/focus" element={<FocusPage tasks={tasks} handleCompletePomodoro={handleCompletePomodoro} />} />
+            <Route path="/dashboard" element={<DashboardPage tasks={tasks} />} />
+          </Routes>
 
         </div>
-
       </div>
 
-      {/* Floating Action Button */}
+      {/* Global Floating Action Button */}
       <div className="fixed bottom-8 right-8 md:bottom-12 md:right-12 z-50">
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="bg-blue-600 text-white px-5 py-3.5 rounded-full font-semibold flex items-center shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:bg-blue-500 hover:-translate-y-1 transition-all active:scale-95 duration-200"
+          className="bg-[#505081] text-white px-5 py-3.5 rounded-full font-semibold flex items-center shadow-xl hover:bg-[#8686AC] hover:-translate-y-1 transition-all active:scale-95 duration-200"
         >
           <FiPlus className="mr-2" size={20} strokeWidth={3} /> Create Task
         </button>
       </div>
 
-      {/* Modals */}
+      {/* Global Modals */}
       <Modal isOpen={isCreateOpen} onClose={closeCreateModal} title="Create a New Task">
         <TaskForm onSubmit={handleCreate} onCancel={closeCreateModal} isUpdate={false} errors={formErrors} />
       </Modal>
@@ -283,17 +188,16 @@ export default function App() {
       </Modal>
 
       <Modal isOpen={!!taskToDelete} onClose={() => setTaskToDelete(null)} title="Delete Task">
-        {/* Your existing delete prompt content */}
         <div className="mb-6 text-gray-300">
           Are you sure you want to delete <span className="text-white font-bold">"{taskToDelete?.title}"</span>? <br />
           <span className="text-red-400 text-sm mt-2 block">This action cannot be undone.</span>
         </div>
         <div className="flex justify-end space-x-3">
-          <button onClick={() => setTaskToDelete(null)} className="px-4 py-2 text-white bg-transparent border border-gray-700 rounded-md hover:bg-gray-800 transition">Cancel</button>
-          <button onClick={handleDelete} className="px-4 py-2 bg-[#7f1d1d] text-white rounded-md hover:bg-red-800 transition font-medium">Delete</button>
+          <button onClick={() => setTaskToDelete(null)} className="px-4 py-2 text-white bg-transparent border border-[#505081] rounded-md hover:bg-[#272757] transition">Cancel</button>
+          <button onClick={handleDelete} className="px-4 py-2 bg-red-900/80 text-white rounded-md hover:bg-red-800 transition font-medium">Delete</button>
         </div>
       </Modal>
 
     </div>
   );
-}   
+}

@@ -23,30 +23,28 @@ export default function CustomDropdown({ value, onChange, options, placeholder }
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                // ✨ STYLED: Removed fixed height, matched SearchBar padding, softened borders
-                className={`w-full bg-[#121212] border rounded-xl px-4 py-2.5 flex justify-between items-center transition-all shadow-sm outline-none
-                    ${isOpen ? 'border-blue-500/50 ring-1 ring-blue-500/50' : 'border-white/5 hover:border-white/10 hover:bg-[#181818]'}`}
+                className={`w-full bg-[#272757] border rounded-xl px-4 py-2.5 flex justify-between items-center transition-all shadow-sm outline-none
+                    ${isOpen ? 'border-blue-400 ring-1 ring-blue-400' : 'border-[#505081] hover:border-[#8686AC]'}`}
             >
-                <span className={`truncate text-sm ${value ? "text-gray-200" : "text-gray-500"}`}>
+                <span className={`truncate text-sm ${value ? "text-white" : "text-[#8686AC]"}`}>
                     {selectedOption ? selectedOption.label : placeholder}
                 </span>
                 <FiChevronDown
-                    className={`ml-2 flex-shrink-0 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-400' : ''}`}
+                    className={`ml-2 flex-shrink-0 text-[#8686AC] transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-400' : ''}`}
                     size={16}
                 />
             </button>
 
             {/* 2. The Floating Menu */}
             {isOpen && (
-                // ✨ STYLED: Changed bg to #1a1a1a for elevation, softened border
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a1a] border border-white/5 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    <ul className="py-1.5 max-h-60 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0F0E47] border border-[#505081] rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <ul className="py-1.5 max-h-60 overflow-y-auto no-scrollbar">
 
                         {/* The "All" Option */}
                         <li
                             onClick={() => { onChange(""); setIsOpen(false); }}
                             className={`px-4 py-2.5 cursor-pointer transition-colors text-sm
-                                ${value === "" ? 'text-blue-400 font-medium bg-blue-500/10' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}
+                                ${value === "" ? 'text-white font-medium bg-[#505081]' : 'text-[#8686AC] hover:bg-[#272757] hover:text-white'}`}
                         >
                             {placeholder}
                         </li>
@@ -57,7 +55,7 @@ export default function CustomDropdown({ value, onChange, options, placeholder }
                                 key={option.value}
                                 onClick={() => { onChange(option.value); setIsOpen(false); }}
                                 className={`px-4 py-2.5 cursor-pointer transition-colors text-sm
-                                    ${value === option.value ? 'text-blue-400 font-medium bg-blue-500/10' : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'}`}
+                                    ${value === option.value ? 'text-white font-medium bg-[#505081]' : 'text-[#8686AC] hover:bg-[#272757] hover:text-white'}`}
                             >
                                 {option.label}
                             </li>
