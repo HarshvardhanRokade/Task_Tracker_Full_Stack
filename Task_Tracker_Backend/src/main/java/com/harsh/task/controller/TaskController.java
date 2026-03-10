@@ -137,4 +137,14 @@ public class TaskController {
                 .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/calendar")
                 .body(calendarBytes);
     }
+
+    @PutMapping(path = "/{taskId}/status")
+    public ResponseEntity<TaskDto> updateTaskStatus (
+            @PathVariable UUID taskId,
+            @RequestParam TaskStatus status
+    ){
+        Task updatedTask = taskService.updateTaskStatus(taskId , status);
+        TaskDto taskDto = taskMapper.toDto(updatedTask);
+        return new ResponseEntity<>(taskDto , HttpStatus.OK);
+    }
 }

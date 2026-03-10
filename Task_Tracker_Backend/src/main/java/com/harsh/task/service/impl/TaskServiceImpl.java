@@ -133,4 +133,16 @@ public class TaskServiceImpl implements TaskService {
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 
+    @Override
+    public Task updateTaskStatus(UUID taskId, TaskStatus status) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        task.setStatus(status);
+        task.setUpdated(Instant.now());
+
+        return taskRepository.save(task);
+    }
+
+
 }

@@ -114,33 +114,26 @@ export default function App() {
   };
 
   const handleToggleStatus = async (id, newStatus) => {
-    const taskToUpdate = tasks.find(t => t.id === id);
-    if (!taskToUpdate) return;
-
-    // ✨ 1. OPTIMISTIC UPDATE: Instantly update the UI before the server even replies!
+    // 1. OPTIMISTIC UPDATE: Instantly update the UI
     setTasks(prevTasks =>
       prevTasks.map(task =>
         task.id === id ? { ...task, status: newStatus } : task
       )
     );
 
-    // 2. Extract just the names from the tag objects for Spring Boot
-    const tagNames = taskToUpdate.tags ? taskToUpdate.tags.map(tag => tag.name) : [];
-
     try {
-      // 3. Silently update the backend in the background
-      await axios.put(`${API_URL}/${id}`, {
-        ...taskToUpdate,
-        status: newStatus,
-        tags: tagNames
-      });
-
-      // Notice we removed fetchTasks() here! We don't need to download 
-      // the list again because our local React state is already correct.
+      // ✨ THE FIX: Hit the new dedicated endpoint! 
+      // We don't send a body anymore, just the status in the URL query.
+      await axios.put(`${API_URL}/${id}/status?status=${newStatus}`);
 
     } catch (error) {
       console.error("Failed to update status on server:", error);
-      // 4. THE ROLLBACK: If the server crashed, fetch the real data to fix the UI
+      
+      if (error.response && error.response.data) {
+          alert("Server Error:\n" + JSON.stringify(error.response.data, null, 2));
+      }
+      
+      // THE ROLLBACK: If the server crashed, fetch the real data to fix the UI
       fetchTasks();
     }
   };

@@ -27,4 +27,6 @@ public interface TaskService {
     Task completePomodoro(UUID taskId);
 
     Task getTask (UUID taskId);
+
+    Task updateTaskStatus (UUID taskId , TaskStatus status);
 }
