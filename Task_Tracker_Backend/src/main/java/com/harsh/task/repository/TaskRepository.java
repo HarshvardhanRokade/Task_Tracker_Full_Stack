@@ -31,12 +31,22 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             Pageable pageable
     );
 
-    // ✨ NEW: Find tasks needing a reminder
-    List<Task> findByReminderDateTimeLessThanEqualAndReminderSentFalseAndStatus(LocalDateTime now, TaskStatus status);
+    @Query("SELECT t FROM Task t JOIN FETCH t.user WHERE t.reminderDateTime <= :now AND t.reminderSent = false AND t.status = :status")
+    List<Task> findByReminderDateTimeLessThanEqualAndReminderSentFalseAndStatus(@Param("now") LocalDateTime now, @Param("status") TaskStatus status);
 
     // Ownership-safe list fetch
     Page<Task> findByUserId(Long userId, Pageable pageable);
 
     // Ownership-safe single fetch (prevents IDOR vulnerabilities)
     Optional<Task> findByIdAndUserId(UUID id, Long userId);
+
+    @Query("SELECT t FROM Task t JOIN FETCH t.user " +
+            "WHERE t.reminderDateTime <= :now " +
+            "AND t.reminderSent = false " +
+            "AND t.status = :status")
+    List<Task> findPendingReminders(
+            @Param("now") LocalDateTime now,
+            @Param("status") TaskStatus status,
+            Pageable pageable
+    );
 }

@@ -17,7 +17,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id; // Swapped to wrapper Long
 
     @Column(nullable = false , unique = true , length = 50)
     private String username;
@@ -28,9 +28,10 @@ public class User {
     @Column(nullable = false , length = 255)
     private String password;
 
+    @Enumerated(EnumType.STRING) // Swapped String for Enum
     @Column(nullable = false , length = 20)
     @Builder.Default
-    private String role = "USER";
+    private UserRole role = UserRole.USER;
 
     @Column(nullable = false , updatable = false)
     private LocalDateTime createdAt;
@@ -38,38 +39,38 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(nullable = false , columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(nullable = false)
     @Builder.Default
     private Integer currentXp = 0;
 
-    @Column(nullable = false , columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(nullable = false)
     @Builder.Default
     private Integer totalXp = 0;
 
-    @Column(nullable = false , columnDefinition = "INT UNSIGNED DEFAULT 1")
+    @Column(nullable = false)
     @Builder.Default
     private Integer level = 1;
 
-    @Column(nullable = false , columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(nullable = false)
     @Builder.Default
     private Integer gemBalance = 0;
 
-    @Column(nullable = false , columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(nullable = false)
     @Builder.Default
     private Integer streakFreezesOwned = 0;
 
     @Column
     private LocalDateTime lastActiveTimestamp;
 
-    @Column(nullable = false , columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(nullable = false)
     @Builder.Default
     private Integer currentDailyStreak = 0;
 
-    @Column(nullable = false , columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(nullable = false)
     @Builder.Default
     private Integer longestDailyStreak = 0;
 
-    @Column(nullable = false , columnDefinition = "INT UNSIGNED DEFAULT 0")
+    @Column(nullable = false)
     @Builder.Default
     private Integer pomodoroFlowStreak = 0;
 
@@ -96,5 +97,4 @@ public class User {
     protected void onUpdate(){
         this.updatedAt = LocalDateTime.now();
     }
-
 }
