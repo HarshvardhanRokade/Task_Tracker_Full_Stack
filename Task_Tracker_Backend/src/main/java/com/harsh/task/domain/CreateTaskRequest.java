@@ -12,6 +12,7 @@ public record CreateTaskRequest(
         LocalDate dueDate,
         LocalDateTime reminderDateTime,
         TaskPriority priority,
-        List<String> tags
+        List<String> tags,
+        Long userId
 ) {
 }

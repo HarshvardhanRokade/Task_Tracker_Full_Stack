@@ -60,6 +60,12 @@ public class Task {
     @Column(name = "pomodoro_count" , nullable = false)
     private Integer pomodoroCount = 0;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private User user;
+
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     @JoinTable(
             name = "task_tags",

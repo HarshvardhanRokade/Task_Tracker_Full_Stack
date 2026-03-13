@@ -23,7 +23,8 @@ public class TaskMapperImpl implements TaskMapper {
                 dto.dueDate(),
                 dto.reminderDateTime(),
                 dto.priority(),
-                dto.tags()
+                dto.tags(),
+                dto.userId()
         );
     }
 

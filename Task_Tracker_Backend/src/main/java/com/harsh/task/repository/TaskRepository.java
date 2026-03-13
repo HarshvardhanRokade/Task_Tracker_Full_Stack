@@ -12,6 +12,7 @@ import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface TaskRepository extends JpaRepository<Task, UUID> {
@@ -22,6 +23,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             "(:priority IS NULL OR t.priority = :priority) AND " +
             "(:tag IS NULL OR tag.name = :tag)")
     Page<Task> filterTasks(
+            @Param("userId") Long userId,
             @Param("search") String search,
             @Param("status") TaskStatus status,
             @Param("priority") TaskPriority priority,
@@ -31,4 +33,10 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     // ✨ NEW: Find tasks needing a reminder
     List<Task> findByReminderDateTimeLessThanEqualAndReminderSentFalseAndStatus(LocalDateTime now, TaskStatus status);
+
+    // Ownership-safe list fetch
+    Page<Task> findByUserId(Long userId, Pageable pageable);
+
+    // Ownership-safe single fetch (prevents IDOR vulnerabilities)
+    Optional<Task> findByIdAndUserId(UUID id, Long userId);
 }
