@@ -1,5 +1,6 @@
 package com.harsh.task.entity;
 
+import com.harsh.task.engine.PauseTier;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -73,13 +74,17 @@ public class User {
     private Integer pomodoroFlowStreak = 0;
 
     @Column
-    private LocalDateTime latPomodoroTime;
+    private LocalDateTime lastPomodoroTime;
 
     @Column
     private LocalDateTime sessionDeadline;
 
     @Column
     private LocalDateTime pauseStartTime;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "worst_pause_tier")
+    private PauseTier worstPauseTier;
 
     @PrePersist
     protected void onCreate(){
