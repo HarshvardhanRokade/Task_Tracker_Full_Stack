@@ -1,34 +1,47 @@
 import React from 'react';
-import PlayerCard from './PlayerCard';
+import { NavLink } from 'react-router-dom';
+import PlayerCard from './PlayerCard'; // ✨ Use the real component
 
 const Sidebar = () => {
+  const navItems = [
+    { name: 'Active Quests', path: '/tasks', icon: '📋' },
+    { name: 'Focus Timer', path: '/focus', icon: '⚡' },
+    { name: 'Dashboard', path: '/dashboard', icon: '📊' },
+  ];
+
   return (
-    <div 
-      className="w-72 h-screen border-r p-4 flex flex-col"
+    <aside 
+      className="w-80 h-screen p-6 flex flex-col border-r"
       style={{ 
         backgroundColor: 'var(--surface-base)',
         borderColor: 'var(--border-subtle)'
       }}
     >
-      {/* App Logo / Title Area */}
-      <div className="mb-8 px-2">
-        <h1 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-          <span className="text-2xl">🚀</span> Workspace
-        </h1>
+      {/* 1. Dynamic Player Info */}
+      <div className="mb-8">
+        <PlayerCard />
       </div>
 
-      {/* The RPG Character Sheet */}
-      <PlayerCard />
-
-      {/* Navigation Placeholders (We will build these later) */}
-      <nav className="flex-1 mt-4">
-        <ul className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-          <li className="p-3 rounded-lg hover:bg-white/5 cursor-pointer">☑ Tasks</li>
-          <li className="p-3 rounded-lg hover:bg-white/5 cursor-pointer">⏱ Focus</li>
-          <li className="p-3 rounded-lg hover:bg-white/5 cursor-pointer">📊 Dashboard</li>
-        </ul>
+      {/* 2. Navigation Links */}
+      <nav className="flex-1 flex flex-col gap-2">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) => 
+              `flex items-center gap-4 p-4 rounded-xl transition-all duration-200 ${
+                isActive 
+                  ? 'bg-[var(--surface-raised)] text-[var(--flow-green)] border border-[var(--border-subtle)] shadow-sm' 
+                  : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-white border border-transparent'
+              }`
+            }
+          >
+            <span className="text-xl">{item.icon}</span>
+            <span className="font-bold">{item.name}</span>
+          </NavLink>
+        ))}
       </nav>
-    </div>
+    </aside>
   );
 };
 
