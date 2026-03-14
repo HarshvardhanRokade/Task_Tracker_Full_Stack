@@ -19,27 +19,33 @@ public class PomodoroController {
 
     private final PomodoroService pomodoroService;
 
-    @PostMapping("/{userId}/start")
-    public ResponseEntity<Void> startSession(@PathVariable Long userId) {
+    @PostMapping("/start")
+    public ResponseEntity<Void> startSession(@RequestParam Long userId) {
         pomodoroService.startSession(userId);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{userId}/pause")
-    public ResponseEntity<Void> pauseSession(@PathVariable Long userId) {
+    @PostMapping("/pause")
+    public ResponseEntity<Void> pauseSession(@RequestParam Long userId) {
         pomodoroService.pauseSession(userId);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{userId}/resume")
-    public ResponseEntity<Void> resumeSession(@PathVariable Long userId) {
+    @PostMapping("/resume")
+    public ResponseEntity<Void> resumeSession(@RequestParam Long userId) {
         pomodoroService.resumeSession(userId);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{userId}/complete")
-    public ResponseEntity<PomodoroRewardDto> completeSession(@PathVariable Long userId) {
+    @PostMapping("/complete")
+    public ResponseEntity<PomodoroRewardDto> completeSession(@RequestParam Long userId) {
         PomodoroRewardDto reward = pomodoroService.completeSession(userId);
         return ResponseEntity.ok(reward);
+    }
+
+    @PostMapping("/forfeit")
+    public ResponseEntity<Void> forfeitSession(@RequestParam Long userId) {
+        pomodoroService.forfeitSession(userId);
+        return ResponseEntity.ok().build();
     }
 }

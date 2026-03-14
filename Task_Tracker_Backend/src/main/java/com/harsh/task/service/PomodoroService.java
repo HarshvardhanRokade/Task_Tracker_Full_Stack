@@ -7,4 +7,5 @@ public interface PomodoroService {
     void pauseSession(Long userId);
     void resumeSession(Long userId);
     PomodoroRewardDto completeSession(Long userId);
+    void forfeitSession (Long userId);
 }

@@ -32,6 +32,7 @@ export const pomodoroApi = {
   pause: () => apiClient.post('/pomodoro/pause'),
   resume: () => apiClient.post('/pomodoro/resume'),
   complete: () => apiClient.post('/pomodoro/complete'),
+  forfeit: () => apiClient.post('/pomodoro/forfeit'),
 };
 
 export const userApi = {

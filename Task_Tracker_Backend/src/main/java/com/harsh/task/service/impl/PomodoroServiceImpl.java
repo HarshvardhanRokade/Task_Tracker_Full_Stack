@@ -215,4 +215,19 @@ public class PomodoroServiceImpl implements PomodoroService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
     }
+
+    @Transactional
+    public void forfeitSession(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+
+        // Clear the active session flags
+        user.setSessionDeadline(null);
+        user.setPauseStartTime(null);
+        user.setWorstPauseTier(null);
+
+        // Note: The flow streak itself will reset on the next /start
+        // if the 40-minute window was missed anyway.
+        userRepository.save(user);
+    }
 }

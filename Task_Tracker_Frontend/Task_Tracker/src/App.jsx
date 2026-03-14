@@ -5,6 +5,7 @@ import Sidebar from './components/sidebar/Sidebar';
 import RewardOverlay from './components/rewards/RewardOverlay';
 import ErrorToast from './components/rewards/ErrorToast';
 import TasksPage from './pages/TaskPage';
+import FocusPage from './pages/FocusPage';
 
 function App() {
   const initializePlayer = useGameStore((state) => state.initializePlayer);
@@ -27,7 +28,7 @@ function App() {
       {/* 2. Main Content Area */}
       <main className="flex-1 p-8 overflow-y-auto">
         {/* RENDER THE REAL TASKS PAGE */}
-        <TasksPage />
+        <FocusPage />
       </main>
 
       {/* 3. Global Overlays */}
