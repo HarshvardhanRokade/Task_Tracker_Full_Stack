@@ -1,17 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: #0F0E47;
-  color: #ffffff;
+
+:root {
+  /* RPG Dark Mode Palette */
+  --bg-dark: #0a0a1a;
+  --surface-base: #12122a;
+  --surface-raised: #1a1a3e;
+  --border-subtle: #2a2a5a;
+
+  /* Gamification Accents */
+  --xp-blue: #4f8ef7;
+  --gem-purple: #9b59b6;
+  --streak-orange: #f39c12;
+  --flow-green: #2ecc71;
+  --level-gold: #f1c40f;
+  --danger-red: #e74c3c;
+
+  /* Typography */
+  --text-primary: #e8e8ff;
+  --text-secondary: #8888aa;
 }
 
-/* ✨ NEW: Hides the scrollbar but keeps scrolling functionality! */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
 }
