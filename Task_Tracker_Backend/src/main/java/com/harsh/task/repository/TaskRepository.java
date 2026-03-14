@@ -18,6 +18,7 @@ import java.util.UUID;
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     @Query("SELECT DISTINCT t FROM Task t LEFT JOIN t.tags tag WHERE " +
+            "t.user.id = :userId AND " + // <--- THIS WAS MISSING!
             "(:search IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
             "(:status IS NULL OR t.status = :status) AND " +
             "(:priority IS NULL OR t.priority = :priority) AND " +
