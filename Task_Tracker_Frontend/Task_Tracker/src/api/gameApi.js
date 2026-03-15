@@ -39,3 +39,8 @@ export const userApi = {
   // User profile lookup
   getProfile: (userId) => apiClient.get(`/users/${userId}`),
 };
+
+export const tagApi = {
+  getAll: () => apiClient.get('/v1/tags'),
+  create: (tagData) => apiClient.post('/v1/tags', tagData),
+};
