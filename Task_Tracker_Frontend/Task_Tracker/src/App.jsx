@@ -9,6 +9,7 @@ import RewardOverlay from './components/rewards/RewardOverlay';
 import ErrorToast from './components/rewards/ErrorToast';
 import TasksPage from './pages/TaskPage'; // Make sure this matches your exact filename!
 import FocusPage from './pages/FocusPage';
+import DashboardPage from './pages/DashboardPage';
 
 // A temporary placeholder so the Dashboard link doesn't crash
 const DashboardPlaceholder = () => (
@@ -39,12 +40,12 @@ function App() {
   }, [userId, initializePlayer]);
 
   return (
-    <div className="min-h-screen flex overflow-hidden" style={{ backgroundColor: 'var(--bg-dark)' }}>
+    <div className="h-screen flex overflow-hidden" style={{ backgroundColor: 'var(--bg-dark)' }}>
       {/* 1. The Static Sidebar */}
       <Sidebar />
       
       {/* 2. Dynamic Main Content Area */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-8 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* AnimatePresence handles the exit animations of pages */}
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
@@ -53,7 +54,7 @@ function App() {
             
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/focus" element={<FocusPage />} />
-            <Route path="/dashboard" element={<DashboardPlaceholder />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
           </Routes>
         </AnimatePresence>
       </main>

@@ -7,7 +7,7 @@ const FocusPage = () => {
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl mx-auto h-full flex flex-col justify-center py-10"
+      className="max-w-4xl mx-auto py-12"
     >
       {/* Page Header */}
       <div className="text-center mb-10">
