@@ -26,7 +26,7 @@ public class UserProfileDto {
         int totalXpForCurrentLevel = user.getLevel() * 500;
         int remainingXp = totalXpForCurrentLevel - user.getCurrentXp();
         int requiredXpForNextLevel = Math.max(0, remainingXp);
-        
+
         return UserProfileDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())

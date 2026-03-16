@@ -32,9 +32,6 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             Pageable pageable
     );
 
-    @Query("SELECT t FROM Task t JOIN FETCH t.user WHERE t.reminderDateTime <= :now AND t.reminderSent = false AND t.status = :status")
-    List<Task> findByReminderDateTimeLessThanEqualAndReminderSentFalseAndStatus(@Param("now") LocalDateTime now, @Param("status") TaskStatus status);
-
     // Ownership-safe list fetch
     Page<Task> findByUserId(Long userId, Pageable pageable);
 
