@@ -23,7 +23,10 @@ public class UserProfileDto {
     private Integer pomodoroFlowStreak;
 
     public static UserProfileDto fromUser(User user) {
-        int requiredXpForNextLevel = user.getLevel() * 500;
+        int totalXpForCurrentLevel = user.getLevel() * 500;
+        int remainingXp = totalXpForCurrentLevel - user.getCurrentXp();
+        int requiredXpForNextLevel = Math.max(0, remainingXp);
+        
         return UserProfileDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())

@@ -121,7 +121,7 @@ const PomodoroTimer = () => {
           border: `1px solid ${flowStreak > 0 ? 'var(--flow-green)' : 'transparent'}`
         }}
       >
-        <span>⚡ Flow Multiplier</span>
+        <span>{sessionActive && !sessionPaused ? '⚡ Flow Multiplier' : '🎁 Next Session Bonus'}</span>
         <span className="text-lg">{calculatedMultiplier}x</span>
       </div>
 

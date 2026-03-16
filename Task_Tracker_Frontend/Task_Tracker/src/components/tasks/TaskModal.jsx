@@ -81,6 +81,35 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
             return;
         }
 
+        // ✨ NEW: Frontend Validation for Due Date
+        if (dueDate) {
+            // Get today's date in local YYYY-MM-DD format to match the HTML date input
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const localTodayStr = `${year}-${month}-${day}`;
+
+            if (dueDate < localTodayStr) {
+                setError('Due date cannot be in the past.');
+                return;
+            }
+        }
+
+        // ✨ NEW: Frontend Validation for Reminder Time
+        if (reminderTime) {
+            const selectedReminder = new Date(reminderTime);
+            const now = new Date();
+
+            // 1-minute grace period to prevent errors if the user takes a few seconds to hit save
+            now.setMinutes(now.getMinutes() - 1);
+
+            if (selectedReminder < now) {
+                setError('Reminder time must be in the future.');
+                return;
+            }
+        }
+
         setIsSubmitting(true);
         try {
             // 1. Clean the dates
@@ -122,7 +151,8 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
             onSuccess(); // Instantly refetch tasks to update the UI
             onClose();
         } catch (error) {
-            console.error('Failed to save task:', error);
+            // ✨ ENHANCED: Now logs the exact error Spring Boot throws back
+            console.error('Failed to save task:', error.response?.data || error);
             setError(`Failed to ${existingTask ? 'update' : 'forge'} quest. Please try again.`);
         } finally {
             setIsSubmitting(false);
