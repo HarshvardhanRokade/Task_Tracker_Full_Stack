@@ -10,6 +10,7 @@ import ErrorToast from './components/rewards/ErrorToast';
 import TasksPage from './pages/TaskPage'; // Make sure this matches your exact filename!
 import FocusPage from './pages/FocusPage';
 import DashboardPage from './pages/DashboardPage';
+import StorePage from './pages/StorePage';
 
 // A temporary placeholder so the Dashboard link doesn't crash
 const DashboardPlaceholder = () => (
@@ -55,6 +56,7 @@ function App() {
             <Route path="/tasks" element={<TasksPage />} />
             <Route path="/focus" element={<FocusPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path='/store' element={<StorePage/>}/>
           </Routes>
         </AnimatePresence>
       </main>
