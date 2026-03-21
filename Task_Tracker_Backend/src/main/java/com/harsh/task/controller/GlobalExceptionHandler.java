@@ -2,6 +2,7 @@ package com.harsh.task.controller;
 
 import com.harsh.task.domain.dto.ErrorResponseDto;
 import com.harsh.task.exception.InsufficientGemsException;
+import com.harsh.task.exception.PriceChangedException;
 import com.harsh.task.exception.ResourceNotFoundException;
 import com.harsh.task.exception.TaskNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -54,10 +55,11 @@ public class GlobalExceptionHandler {
 
     // --- 4. NEW: Gamification Economy Handler ---
     @ExceptionHandler(InsufficientGemsException.class)
-    public ResponseEntity<ErrorResponseDto> handleInsufficientGemsException(InsufficientGemsException ex) {
-
-        ErrorResponseDto errorResponseDto = new ErrorResponseDto(ex.getMessage());
-        return new ResponseEntity<>(errorResponseDto, HttpStatus.PAYMENT_REQUIRED); // HTTP 402
+    public ResponseEntity<ErrorResponseDto> handleInsufficientGems(
+            InsufficientGemsException ex) {
+        return ResponseEntity
+                .status(HttpStatus.PAYMENT_REQUIRED)
+                .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     // --- 5. NEW: Generic Safety Net ---
@@ -75,5 +77,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleIllegalStateException(IllegalStateException ex) {
         ErrorResponseDto errorResponseDto = new ErrorResponseDto(ex.getMessage());
         return new ResponseEntity<>(errorResponseDto, HttpStatus.CONFLICT); // HTTP 409
+    }
+
+    @ExceptionHandler(PriceChangedException.class)
+    public ResponseEntity<ErrorResponseDto> handlePriceChanged(
+            PriceChangedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT) // 409
+                .body(new ErrorResponseDto(
+                        "Price changed to " + ex.getActualCost() + " gems. " + ex.getMessage()
+                ));
     }
 }

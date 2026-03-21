@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -86,6 +89,24 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "worst_pause_tier")
     private PauseTier worstPauseTier;
+
+    @Column(name = "xp_boost_active", nullable = false)
+    @Builder.Default
+    private boolean xpBoostActive = false;
+
+    @Column(name = "profile_theme", nullable = false)
+    @Builder.Default
+    private String profileTheme = "default";
+
+    // ✨ JPA Magic: Maps our new join table directly to a Set of strings!
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "user_themes",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "theme_name")
+    @Builder.Default
+    private Set<String> ownedThemes = new HashSet<>(List.of("default"));
 
     @PrePersist
     protected void onCreate(){
