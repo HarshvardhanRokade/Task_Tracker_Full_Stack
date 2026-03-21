@@ -126,10 +126,20 @@ public class PomodoroServiceImpl implements PomodoroService {
                 user.getStreakFreezesOwned(), user.getLastActiveTimestamp(), now
         );
 
-        // --- 4. Calculate XP and Leveling ---
+        // --- 4. Calculate XP and Leveling (✨ WITH XP BOOST) ---
+        double eventMultiplier = 1.0;
+        boolean boostConsumed = false;
+
+        if (user.isXpBoostActive()) {
+            eventMultiplier = 1.5;
+            boostConsumed = true;
+            user.setXpBoostActive(false); // Burn the boost
+        }
+
+        // Pass the dynamic eventMultiplier instead of DEFAULT_EVENT_MULTIPLIER
         XpResult xpResult = xpEngine.calculate(
                 user.getLevel(), user.getCurrentXp(), user.getTotalXp(),
-                POMODORO_BASE_XP, flowResult.getMultiplierApplied(), DEFAULT_EVENT_MULTIPLIER
+                POMODORO_BASE_XP, flowResult.getMultiplierApplied(), eventMultiplier
         );
 
         // --- 5. Calculate Gems (Separated for DTO clarity) ---
@@ -156,6 +166,7 @@ public class PomodoroServiceImpl implements PomodoroService {
                 .flowStreakBroken(flowResult.isFlowStreakBroken())
                 .sessionStateInvalid(false)
                 .freezeUsed(streakResult.isFreezeUsed())
+                .boostConsumed(boostConsumed)
                 .build();
     }
 

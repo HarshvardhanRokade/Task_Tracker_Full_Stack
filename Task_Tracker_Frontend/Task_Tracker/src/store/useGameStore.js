@@ -16,6 +16,10 @@ const useGameStore = create(devtools((set, get) => ({
   dailyStreak: 0,
   longestDailyStreak: 0,
   flowStreak: 0,
+  
+  // ✨ NEW: Gamification Store States
+  xpBoostActive: false,
+  currentTheme: 'default',
 
   // --- Task List State ---
   tasks: [],
@@ -36,18 +40,27 @@ const useGameStore = create(devtools((set, get) => ({
   // --- Actions ---
 
   // 1. Called on app load to hydrate from backend
-  initializePlayer: (userData) => set({
-    userId: userData.id,
-    username: userData.username,
-    level: userData.level,
-    currentXp: userData.currentXp,
-    totalXp: userData.totalXp,
-    xpToNextLevel: userData.xpToNextLevel,
-    gemBalance: userData.gemBalance,
-    dailyStreak: userData.currentDailyStreak,
-    longestDailyStreak: userData.longestDailyStreak,
-    flowStreak: userData.pomodoroFlowStreak,
-  }),
+  initializePlayer: (userData) => {
+    // ✨ INJECT CSS THEME GLOBALLY ON LOAD!
+    document.documentElement.setAttribute('data-theme', userData.currentTheme || 'default');
+    
+    set({
+      userId: userData.id,
+      username: userData.username,
+      level: userData.level,
+      currentXp: userData.currentXp,
+      totalXp: userData.totalXp,
+      xpToNextLevel: userData.xpToNextLevel,
+      gemBalance: userData.gemBalance,
+      dailyStreak: userData.currentDailyStreak,
+      longestDailyStreak: userData.longestDailyStreak,
+      flowStreak: userData.pomodoroFlowStreak,
+      
+      // ✨ Map the new backend fields
+      xpBoostActive: userData.xpBoostActive,
+      currentTheme: userData.currentTheme,
+    });
+  },
 
   // 2. Called after task complete or pomodoro complete
   applyReward: (rewardDto) => {
@@ -60,9 +73,24 @@ const useGameStore = create(devtools((set, get) => ({
       dailyStreak: rewardDto.dailyStreak ?? state.dailyStreak,
       longestDailyStreak: rewardDto.longestDailyStreak ?? state.longestDailyStreak,
       flowStreak: rewardDto.flowStreak ?? state.flowStreak,
+      
+      // ✨ FIXED: If the backend says the boost was consumed, turn it off in the UI!
+      xpBoostActive: rewardDto.boostConsumed ? false : state.xpBoostActive,
+      
       pendingReward: rewardDto,
       isLevelingUp: rewardDto.didLevelUp || false,
     }));
+  },
+
+  // ✨ NEW: Gamification Store Actions
+  updateGemBalance: (newBalance) => set({ gemBalance: newBalance }),
+  
+  setXpBoostActive: (isActive) => set({ xpBoostActive: isActive }),
+  
+  setCurrentTheme: (themeName) => {
+    // Apply immediately to the DOM so the UI colors shift in real-time
+    document.documentElement.setAttribute('data-theme', themeName);
+    set({ currentTheme: themeName });
   },
 
   // 3. Task Actions

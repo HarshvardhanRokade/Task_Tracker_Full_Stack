@@ -72,11 +72,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponseDto, HttpStatus.INTERNAL_SERVER_ERROR); // HTTP 500
     }
 
-    // --- NEW: Gamification Double-Dip Handler ---
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponseDto> handleIllegalStateException(IllegalStateException ex) {
-        ErrorResponseDto errorResponseDto = new ErrorResponseDto(ex.getMessage());
-        return new ResponseEntity<>(errorResponseDto, HttpStatus.CONFLICT); // HTTP 409
+    public ResponseEntity<ErrorResponseDto> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT) // 409
+                .body(new ErrorResponseDto(ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponseDto> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST) // 400
+                .body(new ErrorResponseDto(ex.getMessage()));
     }
 
     @ExceptionHandler(PriceChangedException.class)

@@ -212,9 +212,21 @@ public class TaskServiceImpl implements TaskService {
 
         LocalDateTime now = LocalDateTime.now();
 
+        // --- ✨ NEW: XP Boost Check (Only for HIGH/MEDIUM tasks) ---
+        double eventMultiplier = 1.0;
+        boolean boostConsumed = false;
+
+        if (user.isXpBoostActive() &&
+                (task.getPriority() == TaskPriority.HIGH || task.getPriority() == TaskPriority.MEDIUM)) {
+            eventMultiplier = 1.5;
+            boostConsumed = true;
+            user.setXpBoostActive(false); // Burn the boost
+        }
+
+        // Pass the dynamic eventMultiplier instead of DEFAULT_EVENT_MULTIPLIER
         XpResult xpResult = xpEngine.calculate(
                 user.getLevel(), user.getCurrentXp(), user.getTotalXp(),
-                baseXp, DEFAULT_FLOW_MULTIPLIER, DEFAULT_EVENT_MULTIPLIER
+                baseXp, DEFAULT_FLOW_MULTIPLIER, eventMultiplier
         );
 
         StreakResult streakResult = streakEngine.calculate(
@@ -247,6 +259,7 @@ public class TaskServiceImpl implements TaskService {
                 .dailyStreak(streakResult.getNewCurrentDailyStreak())
                 .longestDailyStreak(streakResult.getNewLongestDailyStreak())
                 .freezeUsed(streakResult.isFreezeUsed())
+                .boostConsumed(boostConsumed)
                 .build();
     }
 }

@@ -21,6 +21,8 @@ public class UserProfileDto {
     private Integer currentDailyStreak;
     private Integer longestDailyStreak;
     private Integer pomodoroFlowStreak;
+    private boolean xpBoostActive;
+    private String currentTheme;
 
     public static UserProfileDto fromUser(User user) {
         int totalXpForCurrentLevel = user.getLevel() * 500;
@@ -38,6 +40,8 @@ public class UserProfileDto {
                 .currentDailyStreak(user.getCurrentDailyStreak())
                 .longestDailyStreak(user.getLongestDailyStreak())
                 .pomodoroFlowStreak(user.getPomodoroFlowStreak())
+                .xpBoostActive(user.isXpBoostActive())
+                .currentTheme(user.getProfileTheme())
                 .build();
     }
 }

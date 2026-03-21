@@ -29,4 +29,6 @@ public class PomodoroRewardDto {
     private boolean flowStreakBroken;
     private boolean sessionStateInvalid;
     private boolean freezeUsed;
+
+    private boolean boostConsumed;
 }

@@ -24,4 +24,6 @@ public class GamificationResultDto {
     private int dailyStreak;
     private int longestDailyStreak;
     private boolean freezeUsed;
+
+    private boolean boostConsumed;
 }
