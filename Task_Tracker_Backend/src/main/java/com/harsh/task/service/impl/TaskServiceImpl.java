@@ -3,6 +3,7 @@ package com.harsh.task.service.impl;
 import com.harsh.task.domain.CreateTaskRequest;
 import com.harsh.task.domain.UpdateTaskRequest;
 import com.harsh.task.domain.dto.GamificationResultDto;
+import com.harsh.task.entity.LevelUp;
 import com.harsh.task.entity.User;
 import com.harsh.task.engine.StreakEngine;
 import com.harsh.task.engine.StreakResult;
@@ -14,6 +15,7 @@ import com.harsh.task.entity.TaskPriority;
 import com.harsh.task.entity.TaskStatus;
 import com.harsh.task.exception.ResourceNotFoundException;
 import com.harsh.task.exception.TaskNotFoundException;
+import com.harsh.task.repository.LevelUpRepository;
 import com.harsh.task.repository.TagRepository;
 import com.harsh.task.repository.TaskRepository;
 import com.harsh.task.repository.UserRepository;
@@ -38,6 +40,7 @@ public class TaskServiceImpl implements TaskService {
     private final UserRepository userRepository;
     private final XpEngine xpEngine;
     private final StreakEngine streakEngine;
+    private final LevelUpRepository levelUpRepository; // ✨ Injected
 
     private static final int XP_HIGH = 100;
     private static final int GEMS_HIGH = 3;
@@ -51,13 +54,16 @@ public class TaskServiceImpl implements TaskService {
     private static final double DEFAULT_FLOW_MULTIPLIER = 1.0;
     private static final double DEFAULT_EVENT_MULTIPLIER = 1.0;
 
+    // ✨ Added LevelUpRepository to constructor
     public TaskServiceImpl(TaskRepository taskRepository, TagRepository tagRepository,
-                           UserRepository userRepository, XpEngine xpEngine, StreakEngine streakEngine) {
+                           UserRepository userRepository, XpEngine xpEngine, StreakEngine streakEngine,
+                           LevelUpRepository levelUpRepository) {
         this.taskRepository = taskRepository;
         this.tagRepository = tagRepository;
         this.userRepository = userRepository;
         this.xpEngine = xpEngine;
         this.streakEngine = streakEngine;
+        this.levelUpRepository = levelUpRepository;
     }
 
     @Override
@@ -86,7 +92,6 @@ public class TaskServiceImpl implements TaskService {
         return taskRepository.save(newTask);
     }
 
-    // --- SECURED: Only fetches tasks belonging to the user ---
     @Override
     public Page<Task> listTasks(Long userId, Pageable pageable) {
         return taskRepository.findByUserId(userId, pageable);
@@ -95,7 +100,6 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Task updateTask(UUID taskId, UpdateTaskRequest request, Long userId) {
-        // Reuse our secured getTask method below!
         Task existingTask = getTask(taskId, userId);
 
         existingTask.setTitle(request.title());
@@ -113,7 +117,6 @@ public class TaskServiceImpl implements TaskService {
         return taskRepository.save(existingTask);
     }
 
-    // --- SECURED: Verifies ownership before deleting ---
     @Override
     @Transactional
     public void deleteTask(UUID taskId, Long userId) {
@@ -121,13 +124,11 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.delete(task);
     }
 
-    // --- SECURED: Filters only the user's tasks ---
     @Override
     public Page<Task> filterTasks(Long userId, String search, TaskStatus status, TaskPriority priority , String tag ,Pageable pageable) {
         return taskRepository.filterTasks(userId, search , status , priority , tag ,pageable);
     }
 
-    // --- SECURED: Verifies ownership before logging a pomodoro ---
     @Override
     @Transactional
     public Task completePomodoro(UUID taskId, Long userId) {
@@ -159,19 +160,17 @@ public class TaskServiceImpl implements TaskService {
         return tags;
     }
 
-    // --- SECURED: The Master Getter. Prevents IDOR by verifying the user owns the task ---
     @Override
     public Task getTask(UUID taskId, Long userId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
 
-        if (task.getUser().getId() != userId) {
+        if (!task.getUser().getId().equals(userId)) {
             throw new ResourceNotFoundException("Task not found: " + taskId);
         }
         return task;
     }
 
-    // --- SECURED: Verifies ownership before updating status ---
     @Override
     @Transactional
     public Task updateTaskStatus(UUID taskId, TaskStatus status, Long userId) {
@@ -185,7 +184,7 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public GamificationResultDto completeTask(UUID taskId, Long userId) {
 
-        Task task = getTask(taskId, userId); // Use our secured getter!
+        Task task = getTask(taskId, userId);
 
         if (task.getStatus() == TaskStatus.COMPLETED) {
             throw new IllegalStateException("Task " + taskId + " is already completed.");
@@ -212,7 +211,6 @@ public class TaskServiceImpl implements TaskService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // --- ✨ NEW: XP Boost Check (Only for HIGH/MEDIUM tasks) ---
         double eventMultiplier = 1.0;
         boolean boostConsumed = false;
 
@@ -223,7 +221,9 @@ public class TaskServiceImpl implements TaskService {
             user.setXpBoostActive(false); // Burn the boost
         }
 
-        // Pass the dynamic eventMultiplier instead of DEFAULT_EVENT_MULTIPLIER
+        // ✨ 1. Capture original level BEFORE engine call
+        int originalLevel = user.getLevel();
+
         XpResult xpResult = xpEngine.calculate(
                 user.getLevel(), user.getCurrentXp(), user.getTotalXp(),
                 baseXp, DEFAULT_FLOW_MULTIPLIER, eventMultiplier
@@ -246,6 +246,19 @@ public class TaskServiceImpl implements TaskService {
         user.setLastActiveTimestamp(streakResult.getNewLastActiveTimestamp());
 
         userRepository.save(user);
+
+        // ✨ 2. Record level-ups if they occurred!
+        if (xpResult.isDidLevelUp()) {
+            for (int level = originalLevel + 1; level <= xpResult.getNewLevel(); level++) {
+                levelUpRepository.save(LevelUp.builder()
+                        .user(user)
+                        .levelReached(level)
+                        .achievedAt(now)
+                        .xpTotalAtLevelUp(xpResult.getNewTotalXp())
+                        .triggeredBy("TASK") // Accurately logged as a Task completion
+                        .build());
+            }
+        }
 
         return GamificationResultDto.builder()
                 .xpEarned(xpResult.getFinalXpEarned())

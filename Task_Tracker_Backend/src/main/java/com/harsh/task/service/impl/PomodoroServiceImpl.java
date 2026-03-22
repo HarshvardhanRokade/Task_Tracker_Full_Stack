@@ -1,9 +1,13 @@
 package com.harsh.task.service.impl;
 
 import com.harsh.task.domain.dto.PomodoroRewardDto;
+import com.harsh.task.entity.LevelUp;
+import com.harsh.task.entity.PomodoroSession;
 import com.harsh.task.entity.User;
 import com.harsh.task.engine.*;
 import com.harsh.task.exception.ResourceNotFoundException;
+import com.harsh.task.repository.LevelUpRepository;
+import com.harsh.task.repository.PomodoroSessionRepository;
 import com.harsh.task.repository.UserRepository;
 import com.harsh.task.service.PomodoroService;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +27,9 @@ public class PomodoroServiceImpl implements PomodoroService {
     private final XpEngine xpEngine;
     private final StreakEngine streakEngine;
     private final FlowEngine flowEngine;
+    private final PomodoroSessionRepository pomodoroSessionRepository;
+    private final LevelUpRepository levelUpRepository;
 
-    // --- Magic Numbers Banished ---
     private static final int POMODORO_BASE_XP = 100;
     private static final int POMODORO_BASE_GEMS = 5;
     private static final int SESSION_DEADLINE_MINUTES = 40;
@@ -37,18 +42,15 @@ public class PomodoroServiceImpl implements PomodoroService {
         User user = getUser(userId);
         LocalDateTime now = LocalDateTime.now();
 
-        // Guard: Prevent double /start from overwriting an active session
         if (user.getSessionDeadline() != null && now.isBefore(user.getSessionDeadline())) {
             log.info("User {} attempted to start a session, but one is already active.", userId);
             return;
         }
 
-        // 1. Check if they respected the 40-minute window from their LAST session
         if (!flowEngine.isFlowMaintainedAtStart(user.getLastPomodoroTime(), now)) {
-            user.setPomodoroFlowStreak(0); // Window missed, reset flow
+            user.setPomodoroFlowStreak(0);
         }
 
-        // 2. Set Session State (Strict 40-minute wall-clock deadline)
         user.setSessionDeadline(now.plusMinutes(SESSION_DEADLINE_MINUTES));
         user.setPauseStartTime(null);
         user.setWorstPauseTier(null);
@@ -60,10 +62,7 @@ public class PomodoroServiceImpl implements PomodoroService {
     @Transactional
     public void pauseSession(Long userId) {
         User user = getUser(userId);
-
-        if (user.getSessionDeadline() == null || user.getPauseStartTime() != null) {
-            return;
-        }
+        if (user.getSessionDeadline() == null || user.getPauseStartTime() != null) return;
 
         user.setPauseStartTime(LocalDateTime.now());
         userRepository.save(user);
@@ -73,27 +72,20 @@ public class PomodoroServiceImpl implements PomodoroService {
     @Transactional
     public void resumeSession(Long userId) {
         User user = getUser(userId);
-
-        if (user.getPauseStartTime() == null) {
-            return;
-        }
+        if (user.getPauseStartTime() == null) return;
 
         LocalDateTime now = LocalDateTime.now();
         long pauseDurationMinutes = Duration.between(user.getPauseStartTime(), now).toMinutes();
 
-        // 1. Extend the absolute deadline (Capped at 15 minutes to prevent abuse)
         long cappedExtension = Math.min(pauseDurationMinutes, MAX_PAUSE_EXTENSION_MINUTES);
         user.setSessionDeadline(user.getSessionDeadline().plusMinutes(cappedExtension));
 
-        // 2. Evaluate the pause tier (Based on RAW duration, not the capped extension)
         PauseTier currentPauseTier = flowEngine.evaluatePauseDuration(pauseDurationMinutes);
 
-        // 3. Escalate the Worst Pause Tier if necessary
         if (user.getWorstPauseTier() == null || currentPauseTier.ordinal() > user.getWorstPauseTier().ordinal()) {
             user.setWorstPauseTier(currentPauseTier);
         }
 
-        // 4. Clear the pause state
         user.setPauseStartTime(null);
         userRepository.save(user);
     }
@@ -104,59 +96,60 @@ public class PomodoroServiceImpl implements PomodoroService {
         User user = getUser(userId);
         LocalDateTime now = LocalDateTime.now();
 
-        // --- 1. Degraded Success Check (Out of Sequence API Call) ---
         if (user.getSessionDeadline() == null) {
             log.warn("User {} called /complete without an active session.", userId);
             return handleDegradedSuccess(user, now);
         }
 
-        // --- 2. Evaluate Flow State ---
         PauseTier effectiveTier = user.getWorstPauseTier() != null ? user.getWorstPauseTier() : PauseTier.TIER_1_GRACE;
-
-        // Strict boundary: If deadline has passed at all, flow is broken
-        if (now.isAfter(user.getSessionDeadline())) {
-            effectiveTier = PauseTier.TIER_3_BROKEN;
-        }
+        if (now.isAfter(user.getSessionDeadline())) effectiveTier = PauseTier.TIER_3_BROKEN;
 
         FlowCompletionResult flowResult = flowEngine.evaluateCompletion(user.getPomodoroFlowStreak(), effectiveTier);
 
-        // --- 3. Calculate Daily Streak ---
         StreakResult streakResult = streakEngine.calculate(
                 user.getCurrentDailyStreak(), user.getLongestDailyStreak(),
                 user.getStreakFreezesOwned(), user.getLastActiveTimestamp(), now
         );
 
-        // --- 4. Calculate XP and Leveling (✨ WITH XP BOOST) ---
         double eventMultiplier = 1.0;
         boolean boostConsumed = false;
 
         if (user.isXpBoostActive()) {
             eventMultiplier = 1.5;
             boostConsumed = true;
-            user.setXpBoostActive(false); // Burn the boost
+            user.setXpBoostActive(false);
         }
 
-        // Pass the dynamic eventMultiplier instead of DEFAULT_EVENT_MULTIPLIER
+        // ✨ Capture original level BEFORE engine calculation
+        int levelBeforeXp = user.getLevel();
+
         XpResult xpResult = xpEngine.calculate(
                 user.getLevel(), user.getCurrentXp(), user.getTotalXp(),
                 POMODORO_BASE_XP, flowResult.getMultiplierApplied(), eventMultiplier
         );
 
-        // --- 5. Calculate Gems (Separated for DTO clarity) ---
         int calculatedGems = (int) Math.round(POMODORO_BASE_GEMS * flowResult.getMultiplierApplied());
         int finalGemsEarned = calculatedGems + xpResult.getLevelUpGemBonus();
 
-        // --- 6. Apply all calculated states to the User ---
+        // Save User Data
         applyResultsToUser(user, flowResult, streakResult, xpResult, finalGemsEarned, now);
 
-        // --- 7. Package and return the DTO ---
+        // ✨ Save Pomodoro Session History
+        recordSession(user, xpResult, calculatedGems,
+                flowResult.getMultiplierApplied(),
+                flowResult.getNewFlowStreak(),
+                false, boostConsumed, now);
+
+        // ✨ Save Level-Up History (passing levelBeforeXp)
+        recordLevelUpsIfOccurred(user, xpResult, levelBeforeXp, "POMODORO", now);
+
         return PomodoroRewardDto.builder()
                 .xpEarned(xpResult.getFinalXpEarned())
-                .gemsEarned(calculatedGems) // Base gems only
+                .gemsEarned(calculatedGems)
                 .multiplierApplied(flowResult.getMultiplierApplied())
                 .didLevelUp(xpResult.isDidLevelUp())
                 .newLevel(xpResult.getNewLevel())
-                .levelUpGemBonus(xpResult.getLevelUpGemBonus()) // Separated bonus
+                .levelUpGemBonus(xpResult.getLevelUpGemBonus())
                 .currentXp(xpResult.getNewCurrentXp())
                 .totalXp(xpResult.getNewTotalXp())
                 .xpToNextLevel(xpResult.getXpToNextLevel())
@@ -171,16 +164,25 @@ public class PomodoroServiceImpl implements PomodoroService {
     }
 
     private PomodoroRewardDto handleDegradedSuccess(User user, LocalDateTime now) {
+        // ✨ Capture level BEFORE engine calculation
+        int levelBeforeXp = user.getLevel();
+
         XpResult xpResult = xpEngine.calculate(user.getLevel(), user.getCurrentXp(), user.getTotalXp(), POMODORO_BASE_XP, 1.0, DEFAULT_EVENT_MULTIPLIER);
         StreakResult streakResult = streakEngine.calculate(user.getCurrentDailyStreak(), user.getLongestDailyStreak(), user.getStreakFreezesOwned(), user.getLastActiveTimestamp(), now);
 
-        int calculatedGems = POMODORO_BASE_GEMS; // 1.0x multiplier
+        int calculatedGems = POMODORO_BASE_GEMS;
         int finalGems = calculatedGems + xpResult.getLevelUpGemBonus();
 
         FlowCompletionResult degradedFlow = FlowCompletionResult.builder()
                 .newFlowStreak(0).multiplierApplied(1.0).flowStreakBroken(true).build();
 
         applyResultsToUser(user, degradedFlow, streakResult, xpResult, finalGems, now);
+
+        // ✨ Save Degraded Session History (wasDegraded = true)
+        recordSession(user, xpResult, calculatedGems, 1.0, 0, true, false, now);
+
+        // ✨ Save Level-Up History if they leveled up off a degraded session
+        recordLevelUpsIfOccurred(user, xpResult, levelBeforeXp, "POMODORO", now);
 
         return PomodoroRewardDto.builder()
                 .xpEarned(xpResult.getFinalXpEarned())
@@ -201,11 +203,20 @@ public class PomodoroServiceImpl implements PomodoroService {
                 .build();
     }
 
+    @Transactional
+    public void forfeitSession(Long userId) {
+        User user = getUser(userId);
+        user.setSessionDeadline(null);
+        user.setPauseStartTime(null);
+        user.setWorstPauseTier(null);
+        userRepository.save(user);
+    }
+
     private void applyResultsToUser(User user, FlowCompletionResult flow, StreakResult streak, XpResult xp, int totalGems, LocalDateTime now) {
         user.setCurrentXp(xp.getNewCurrentXp());
         user.setTotalXp(xp.getNewTotalXp());
         user.setLevel(xp.getNewLevel());
-        user.setGemBalance(user.getGemBalance() + totalGems); // Combined total applied to DB
+        user.setGemBalance(user.getGemBalance() + totalGems);
 
         user.setCurrentDailyStreak(streak.getNewCurrentDailyStreak());
         user.setLongestDailyStreak(streak.getNewLongestDailyStreak());
@@ -227,18 +238,39 @@ public class PomodoroServiceImpl implements PomodoroService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
     }
 
-    @Transactional
-    public void forfeitSession(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+    // --- Helper Methods for Analytics Recording ---
 
-        // Clear the active session flags
-        user.setSessionDeadline(null);
-        user.setPauseStartTime(null);
-        user.setWorstPauseTier(null);
+    private void recordSession(User user, XpResult xpResult,
+                               int gemsEarned, double multiplier,
+                               int flowStreakAtCompletion, boolean wasDegraded,
+                               boolean boostConsumed, LocalDateTime completedAt) {
+        PomodoroSession session = PomodoroSession.builder()
+                .user(user)
+                .completedAt(completedAt)
+                .xpEarned(xpResult.getFinalXpEarned())
+                .gemsEarned(gemsEarned)
+                .multiplierApplied(multiplier)
+                .flowStreakAtCompletion(flowStreakAtCompletion)
+                .wasDegraded(wasDegraded)
+                .boostConsumed(boostConsumed)
+                .build();
 
-        // Note: The flow streak itself will reset on the next /start
-        // if the 40-minute window was missed anyway.
-        userRepository.save(user);
+        pomodoroSessionRepository.save(session);
+    }
+
+    private void recordLevelUpsIfOccurred(User user, XpResult xpResult, int levelBeforeXp, String triggeredBy, LocalDateTime now) {
+        if (!xpResult.isDidLevelUp()) return;
+
+        // Gracefully handles multi-level jumps by recording each distinct level gained
+        for (int level = levelBeforeXp + 1; level <= xpResult.getNewLevel(); level++) {
+            LevelUp levelUp = LevelUp.builder()
+                    .user(user)
+                    .levelReached(level)
+                    .achievedAt(now)
+                    .xpTotalAtLevelUp(xpResult.getNewTotalXp())
+                    .triggeredBy(triggeredBy)
+                    .build();
+            levelUpRepository.save(levelUp);
+        }
     }
 }
