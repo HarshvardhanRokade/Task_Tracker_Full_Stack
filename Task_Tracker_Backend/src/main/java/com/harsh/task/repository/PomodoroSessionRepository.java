@@ -34,4 +34,20 @@ public interface PomodoroSessionRepository extends JpaRepository<PomodoroSession
             @Param("userId") Long userId,
             @Param("after") LocalDateTime after
     );
+
+    // XP earned per day for progression chart
+    @Query("SELECT DATE(ps.completedAt), SUM(ps.xpEarned) " +
+            "FROM PomodoroSession ps " +
+            "WHERE ps.user.id = :userId " +
+            "AND ps.completedAt >= :after " +
+            "GROUP BY DATE(ps.completedAt) " +
+            "ORDER BY DATE(ps.completedAt) ASC")
+    List<Object[]> sumXpByDay(
+            @Param("userId") Long userId,
+            @Param("after") LocalDateTime after
+    );
+
+    // Total XP from Pomodoros
+    @Query("SELECT SUM(ps.xpEarned) FROM PomodoroSession ps WHERE ps.user.id = :userId")
+    Long sumTotalXp(@Param("userId") Long userId);
 }

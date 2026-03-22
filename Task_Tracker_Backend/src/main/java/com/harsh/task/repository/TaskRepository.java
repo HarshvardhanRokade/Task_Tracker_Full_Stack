@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.w3c.dom.stylesheets.LinkStyle;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -47,4 +48,44 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             @Param("status") TaskStatus status,
             Pageable pageable
     );
+
+    // Daily completions count for analytics
+    @Query("SELECT CAST(t.updated AS date), COUNT(t) FROM Task t " +
+            "WHERE t.user.id = :userId " +
+            "AND t.status = 'COMPLETED' " +
+            "AND t.updated >= :after " +
+            "GROUP BY CAST(t.updated AS date) " +
+            "ORDER BY CAST(t.updated AS date) ASC")
+    List<Object[]> countDailyCompletions(
+            @Param("userId") Long userId,
+            @Param("after") Instant after
+    );
+
+    // Count by priority
+    @Query("SELECT t.priority, COUNT(t) FROM Task t " +
+            "WHERE t.user.id = :userId " +
+            "AND t.status = 'COMPLETED' " +
+            "AND t.updated >= :after " +
+            "GROUP BY t.priority")
+    List<Object[]> countByPriority(
+            @Param("userId") Long userId,
+            @Param("after") Instant after
+    );
+
+    // Top tags on completed tasks
+    @Query("SELECT tag.name, COUNT(t) FROM Task t " +
+            "JOIN t.tags tag " +
+            "WHERE t.user.id = :userId " +
+            "AND t.status = 'COMPLETED' " +
+            "AND t.updated >= :after " +
+            "GROUP BY tag.name " +
+            "ORDER BY COUNT(t) DESC")
+    List<Object[]> countTopTags(
+            @Param("userId") Long userId,
+            @Param("after") Instant after,
+            Pageable pageable
+    );
+
+    // Total completed tasks
+    long countByUserIdAndStatus(Long userId, TaskStatus status);
 }
