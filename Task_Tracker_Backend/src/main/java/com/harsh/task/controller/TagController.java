@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/tags")
@@ -17,13 +18,19 @@ public class TagController {
     private final TagService tagService;
 
     @GetMapping
-    public ResponseEntity<List<TagDto>> getAllTags() {
-        return ResponseEntity.ok(tagService.getAllTags());
+    public ResponseEntity<List<TagDto>> getAllTags(@RequestParam Long userId) {
+        return ResponseEntity.ok(tagService.getAllTags(userId));
     }
 
     @PostMapping
     public ResponseEntity<TagDto> createTag(@RequestBody TagDto request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(tagService.createTag(request));
+    }
+
+    @DeleteMapping("/{tagId}")
+    public ResponseEntity<Void> deleteTag(@PathVariable UUID tagId) {
+        tagService.deleteTag(tagId);
+        return ResponseEntity.noContent().build();
     }
 }
