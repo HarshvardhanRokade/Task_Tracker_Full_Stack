@@ -5,7 +5,7 @@ import useGameStore from '../store/useGameStore';
 import TaskCard from '../components/tasks/TaskCard';
 import TaskModal from '../components/tasks/TaskModal';
 
-// ✨ NEW: Beautiful, animated custom dropdown component to replace native <select>
+// ✨ UPGRADED: Beautiful, animated custom dropdown component that matches the search bar
 const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -27,18 +27,19 @@ const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
     <div className="relative" ref={dropdownRef}>
       <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-sm z-10">{icon}</span>
       
-      {/* The visible input box */}
+      {/* ✨ FIXED: Uses font-normal and text-[var(--text-secondary)] to match the Search bar perfectly */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full pl-9 pr-8 py-2.5 bg-[var(--surface-raised)] border rounded-xl text-sm text-white cursor-pointer select-none transition-colors flex items-center min-h-[42px]"
+        className="w-full pl-9 pr-8 py-2.5 bg-[var(--surface-raised)] border rounded-xl text-sm font-normal text-[var(--text-secondary)] hover:text-white cursor-pointer select-none transition-colors flex items-center min-h-[42px]"
         style={{ borderColor: isOpen ? 'var(--xp-blue)' : 'var(--border-subtle)' }}
       >
-        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+        <span className="truncate" style={{ color: value === 'ALL' ? 'var(--text-secondary)' : 'white' }}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
       </div>
       
-      {/* ✨ FIXED: The dropdown arrow is now a perfectly centered SVG */}
       <div 
-        className="absolute right-3 top-1/2 opacity-50 pointer-events-none transition-transform duration-200 flex items-center justify-center" 
+        className="absolute right-3 top-1/2 opacity-50 pointer-events-none transition-transform duration-200 flex items-center justify-center text-[var(--text-secondary)]" 
         style={{ transform: isOpen ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%) rotate(0deg)'}}
       >
         <svg 
@@ -75,7 +76,7 @@ const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
                     className="px-4 py-3 text-sm cursor-pointer transition-colors hover:bg-[var(--surface-base)] flex items-center gap-2"
                     style={{ 
-                      color: isSelected ? 'var(--xp-blue)' : 'white',
+                      color: isSelected ? 'var(--xp-blue)' : 'var(--text-secondary)',
                       backgroundColor: isSelected ? 'var(--surface-base)' : 'transparent',
                       fontWeight: isSelected ? 'bold' : 'normal'
                     }}
@@ -231,12 +232,13 @@ const TasksPage = () => {
         {/* 1. Search Bar */}
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-sm">🔍</span>
+          {/* ✨ FIXED: Added font-normal and placeholder-[var(--text-secondary)] to perfectly match CustomSelect */}
           <input 
             type="text" 
             placeholder="Search titles..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-xl text-sm text-white focus:outline-none focus:border-[var(--xp-blue)] transition-colors"
+            className="w-full pl-9 pr-3 py-2.5 bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-xl text-sm font-normal text-white placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--xp-blue)] transition-colors"
           />
         </div>
 

@@ -27,7 +27,6 @@ export const taskApi = {
 };
 
 export const pomodoroApi = {
-  // Fixed: The interceptor will automatically append ?userId=1 to these!
   start: () => apiClient.post('/pomodoro/start'),
   pause: () => apiClient.post('/pomodoro/pause'),
   resume: () => apiClient.post('/pomodoro/resume'),
@@ -36,11 +35,17 @@ export const pomodoroApi = {
 };
 
 export const userApi = {
-  // User profile lookup
   getProfile: (userId) => apiClient.get(`/users/${userId}`),
 };
 
 export const tagApi = {
   getAll: () => apiClient.get('/v1/tags'),
   create: (tagData) => apiClient.post('/v1/tags', tagData),
+  delete: (tagId) => apiClient.delete(`/v1/tags/${tagId}`),
+};
+
+export const storeApi = {
+  getInventory: () => apiClient.get('/v1/store/inventory'),
+  purchaseItem: (requestData) => apiClient.post('/v1/store/purchase', requestData),
+  equipTheme: (themeName) => apiClient.post('/v1/store/equip-theme', null, { params: { themeName } })
 };

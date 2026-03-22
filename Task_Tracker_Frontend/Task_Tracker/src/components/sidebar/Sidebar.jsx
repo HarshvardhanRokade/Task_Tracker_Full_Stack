@@ -7,7 +7,7 @@ const Sidebar = () => {
     { name: 'Active Quests', path: '/tasks', icon: '📋' },
     { name: 'Focus Timer', path: '/focus', icon: '⚡' },
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
-    {name: 'Store' , path: '/store' , icon:'📊'},
+    { name: 'Tavern', path: '/store', icon: '💎' },
   ];
 
   return (

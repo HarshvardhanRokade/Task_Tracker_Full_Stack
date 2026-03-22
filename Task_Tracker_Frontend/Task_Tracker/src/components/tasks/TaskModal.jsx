@@ -1,7 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { taskApi, tagApi } from '../../api/gameApi';
 import useGameStore from '../../store/useGameStore';
+
+// ✨ NEW: Custom Dropdown specifically styled for the Modal form inputs
+const ModalSelect = ({ value, onChange, options }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedOption = options.find(opt => opt.value === value);
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <div
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full p-3 rounded-lg bg-[var(--surface-raised)] border text-white cursor-pointer select-none transition-colors flex items-center justify-between"
+                style={{ borderColor: isOpen ? 'var(--xp-blue)' : 'var(--border-subtle)' }}
+            >
+                <span>{selectedOption ? selectedOption.label : 'Select...'}</span>
+                
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" 
+                    className="opacity-50 transition-transform duration-200"
+                    style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </div>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.15 }}
+                        className="absolute left-0 right-0 top-[calc(100%+4px)] bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-lg shadow-2xl z-50 overflow-hidden"
+                    >
+                        {options.map((opt) => (
+                            <div
+                                key={opt.value}
+                                onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                                className="p-3 text-sm cursor-pointer transition-colors hover:bg-[var(--surface-base)]"
+                                style={{
+                                    color: value === opt.value ? 'var(--xp-blue)' : 'white',
+                                    backgroundColor: value === opt.value ? 'var(--surface-base)' : 'transparent',
+                                    fontWeight: value === opt.value ? 'bold' : 'normal'
+                                }}
+                            >
+                                {opt.label}
+                            </div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
 
 const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
     const { setError } = useGameStore();
@@ -14,7 +77,7 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
     const [priority, setPriority] = useState('MEDIUM');
     const [dueDate, setDueDate] = useState('');
     const [reminderTime, setReminderTime] = useState('');
-    const [selectedTags, setSelectedTags] = useState([]); // Array of full tag objects for UI
+    const [selectedTags, setSelectedTags] = useState([]); 
 
     // Tag Management State
     const [availableTags, setAvailableTags] = useState([]);
@@ -81,9 +144,7 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
             return;
         }
 
-        // ✨ NEW: Frontend Validation for Due Date
         if (dueDate) {
-            // Get today's date in local YYYY-MM-DD format to match the HTML date input
             const today = new Date();
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -96,12 +157,9 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
             }
         }
 
-        // ✨ NEW: Frontend Validation for Reminder Time
         if (reminderTime) {
             const selectedReminder = new Date(reminderTime);
             const now = new Date();
-
-            // 1-minute grace period to prevent errors if the user takes a few seconds to hit save
             now.setMinutes(now.getMinutes() - 1);
 
             if (selectedReminder < now) {
@@ -112,28 +170,23 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
 
         setIsSubmitting(true);
         try {
-            // 1. Clean the dates
             const cleanDueDate = dueDate ? dueDate : null;
             const cleanReminder = reminderTime ? (reminderTime.length === 16 ? `${reminderTime}:00` : reminderTime) : null;
 
             if (existingTask) {
-                // ✨ PERFECT MATCH FOR: UpdateTaskRequest
                 const updatePayload = {
                     title: title.trim(),
                     description: description.trim() || null,
                     dueDate: cleanDueDate,
                     reminderDateTime: cleanReminder,
-                    status: existingTask.status || 'OPEN', // Required by Update record
+                    status: existingTask.status || 'OPEN', 
                     priority: priority,
                     tags: selectedTags.map(t => t.name)
-                    // Notice: NO userId here!
                 };
 
-                console.log("Updating quest with payload:", updatePayload);
                 await taskApi.update(existingTask.id, updatePayload);
 
             } else {
-                // ✨ PERFECT MATCH FOR: CreateTaskRequest
                 const createPayload = {
                     title: title.trim(),
                     description: description.trim() || null,
@@ -141,17 +194,15 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
                     reminderDateTime: cleanReminder,
                     priority: priority,
                     tags: selectedTags.map(t => t.name),
-                    userId: userId // Required by Create record!
+                    userId: userId 
                 };
 
-                console.log("Forging quest with payload:", createPayload);
                 await taskApi.create(createPayload);
             }
 
-            onSuccess(); // Instantly refetch tasks to update the UI
+            onSuccess(); 
             onClose();
         } catch (error) {
-            // ✨ ENHANCED: Now logs the exact error Spring Boot throws back
             console.error('Failed to save task:', error.response?.data || error);
             setError(`Failed to ${existingTask ? 'update' : 'forge'} quest. Please try again.`);
         } finally {
@@ -159,10 +210,17 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
         }
     };
 
+    // ✨ Define options for our new ModalSelect
+    const priorityOptions = [
+        { label: 'Low', value: 'LOW' },
+        { label: 'Medium', value: 'MEDIUM' },
+        { label: 'High', value: 'HIGH' }
+    ];
+
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <motion.div
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         onClick={onClose}
@@ -195,11 +253,14 @@ const TaskModal = ({ isOpen, onClose, onSuccess, existingTask = null }) => {
                                 <div className="flex gap-4">
                                     <div className="flex-1">
                                         <label className="block text-sm font-bold mb-1 text-[var(--text-secondary)]">Priority Threat</label>
-                                        <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full p-3 rounded-lg bg-[var(--surface-raised)] border border-[var(--border-subtle)] text-white focus:outline-none focus:border-[var(--xp-blue)]">
-                                            <option value="LOW">Low (Blue)</option>
-                                            <option value="MEDIUM">Medium (Orange)</option>
-                                            <option value="HIGH">High (Red)</option>
-                                        </select>
+                                        
+                                        {/* ✨ REPLACED NATIVE SELECT WITH MODAL SELECT */}
+                                        <ModalSelect 
+                                            value={priority}
+                                            onChange={setPriority}
+                                            options={priorityOptions}
+                                        />
+                                        
                                     </div>
                                 </div>
 

@@ -6,12 +6,13 @@ import XpBar from './XpBar';
 const PlayerCard = () => {
   const { 
     level, 
-    username, // Added this!
+    username, 
     currentXp, 
     xpToNextLevel, 
     gemBalance, 
     dailyStreak,
-    getLevelName 
+    getLevelName,
+    xpBoostActive // ✨ 1. Pull the boost state from the store
   } = useGameStore();
 
   return (
@@ -21,7 +22,6 @@ const PlayerCard = () => {
           {level}
         </div>
         <div>
-          {/* Fixed: Now perfectly reactive to state changes! */}
           <h3 className="font-bold text-sm m-0" style={{ color: 'var(--text-primary)' }}>{username}</h3>
           <p className="text-xs m-0" style={{ color: 'var(--level-gold)' }}>{getLevelName()}</p>
         </div>
@@ -39,6 +39,20 @@ const PlayerCard = () => {
           <span className="text-sm font-semibold">{dailyStreak}</span>
         </div>
       </div>
+
+      {/* ✨ 2. The Global Boost Indicator! */}
+      {xpBoostActive && (
+        <div 
+          className="mt-3 pt-3 border-t flex items-center justify-center gap-2 text-xs font-bold"
+          style={{ 
+            borderColor: 'var(--border-subtle)',
+            color: 'var(--flow-green)'
+          }}
+        >
+          <span className="animate-pulse text-base">⚡</span>
+          XP Boost Ready
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* ✨ Global Theme Transition */
+*, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-duration: 0.4s;
+    transition-timing-function: ease-in-out;
+}
+
 
 :root {
   /* RPG Dark Mode Palette */
@@ -24,4 +31,22 @@
 body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
+}
+
+[data-theme="cosmic"] {
+    --xp-blue: #a855f7;
+    --flow-green: #ec4899;
+    --level-gold: #8b5cf6;
+    --surface-base: #0f0a1e;
+    --surface-raised: #1a0f3a;
+    --border-subtle: #3b1f6e;
+}
+
+[data-theme="ember"] {
+    --xp-blue: #f97316;
+    --flow-green: #ef4444;
+    --level-gold: #fbbf24;
+    --surface-base: #1a0a00;
+    --surface-raised: #2d1000;
+    --border-subtle: #7c2d12;
 }
