@@ -49,3 +49,14 @@ export const storeApi = {
   purchaseItem: (requestData) => apiClient.post('/v1/store/purchase', requestData),
   equipTheme: (themeName) => apiClient.post('/v1/store/equip-theme', null, { params: { themeName } })
 };
+
+export const analyticsApi = {
+    getSummary:     () => 
+        apiClient.get('/v1/analytics/summary'),
+    getTasks:       (period) => 
+        apiClient.get('/v1/analytics/tasks', { params: { period } }),
+    getPomodoro:    (period) => 
+        apiClient.get('/v1/analytics/pomodoro', { params: { period } }),
+    getProgression: (period) => 
+        apiClient.get('/v1/analytics/progression', { params: { period } }),
+}

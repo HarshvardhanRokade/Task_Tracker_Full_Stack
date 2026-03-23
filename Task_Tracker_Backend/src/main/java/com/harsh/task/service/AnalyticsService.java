@@ -171,17 +171,40 @@ public class AnalyticsService {
 
         LocalDateTime after = period.toStartDate();
 
-        // XP by period from Pomodoro sessions
-        List<Object[]> xpRaw = pomodoroSessionRepository
-                .sumXpByDay(userId, after);
-        List<ProgressionAnalyticsDto.PeriodXpDto> xpByPeriod = xpRaw.stream()
-                .map(row -> ProgressionAnalyticsDto.PeriodXpDto.builder()
-                        .label(row[0].toString())
-                        .xp(((Number) row[1]).longValue())
+        // 1. Convert LocalDateTime to Instant for the Task query
+        Instant afterInstant = after.toInstant(
+                java.time.ZoneOffset.systemDefault()
+                        .getRules().getOffset(after)
+        );
+
+        // 2. Fetch both Pomodoro XP and Task XP
+        List<Object[]> xpRaw = pomodoroSessionRepository.sumXpByDay(userId, after);
+        List<Object[]> taskXpRaw = taskRepository.sumXpByDay(userId, afterInstant);
+
+        // 3. Merge task XP and Pomodoro XP into combined daily totals
+        Map<String, Long> combinedXp = new LinkedHashMap<>();
+
+        // Add Pomodoro XP
+        xpRaw.forEach(row ->
+                combinedXp.merge(row[0].toString(),
+                        ((Number) row[1]).longValue(), Long::sum));
+
+        // Add Task XP
+        taskXpRaw.forEach(row ->
+                combinedXp.merge(row[0].toString(),
+                        ((Number) row[1]).longValue(), Long::sum));
+
+        // 4. Map the merged data to your DTO
+        List<ProgressionAnalyticsDto.PeriodXpDto> xpByPeriod = combinedXp
+                .entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> ProgressionAnalyticsDto.PeriodXpDto.builder()
+                        .label(e.getKey())
+                        .xp(e.getValue())
                         .build())
                 .toList();
 
-        // Level-up history
+        // 5. Level-up history (Remains completely unchanged)
         List<LevelUp> levelUps = period == AnalyticsPeriod.ALL_TIME
                 ? levelUpRepository.findByUserIdOrderByAchievedAtAsc(userId)
                 : levelUpRepository

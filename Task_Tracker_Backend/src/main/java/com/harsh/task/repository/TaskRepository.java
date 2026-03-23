@@ -86,6 +86,21 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             Pageable pageable
     );
 
+    // Add to TaskRepository
+    @Query("SELECT DATE(t.updated), SUM(CASE " +
+            "WHEN t.priority = 'HIGH' THEN 100 " +
+            "WHEN t.priority = 'MEDIUM' THEN 75 " +
+            "ELSE 50 END) " +
+            "FROM Task t " +
+            "WHERE t.user.id = :userId " +
+            "AND t.status = 'COMPLETED' " +
+            "AND t.updated >= :after " +
+            "GROUP BY DATE(t.updated)")
+    List<Object[]> sumXpByDay(
+            @Param("userId") Long userId,
+            @Param("after") Instant after
+    );
+
     // Total completed tasks
     long countByUserIdAndStatus(Long userId, TaskStatus status);
 }
