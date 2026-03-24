@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 public class GamificationSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
@@ -34,7 +36,7 @@ public class GamificationSeeder implements CommandLineRunner {
         userRepository.save(User.builder()
                 .username("newbie_user")
                 .email("newbie@test.com")
-                .password("hashed_password")
+                .password(passwordEncoder.encode("Password123!"))
                 .role(UserRole.USER)
                 .currentXp(0)
                 .level(1)
@@ -46,7 +48,7 @@ public class GamificationSeeder implements CommandLineRunner {
         userRepository.save(User.builder()
                 .username("grinder_user")
                 .email("grinder@test.com")
-                .password("hashed_password")
+                .password(passwordEncoder.encode("Password123!"))
                 .role(UserRole.USER)
                 .level(49)
                 .currentXp(24400)
@@ -58,7 +60,7 @@ public class GamificationSeeder implements CommandLineRunner {
         userRepository.save(User.builder()
                 .username("streaker_user")
                 .email("streaker@test.com")
-                .password("hashed_password")
+                .password(passwordEncoder.encode("Password123!"))
                 .role(UserRole.USER)
                 .level(15)
                 .currentXp(3200)
@@ -74,7 +76,7 @@ public class GamificationSeeder implements CommandLineRunner {
         userRepository.save(User.builder()
                 .username("nightowl_grace")
                 .email("nightowl_grace@test.com")
-                .password("hashed_password")
+                .password(passwordEncoder.encode("Password123!"))
                 .role(UserRole.USER)
                 .currentDailyStreak(7)
                 .longestDailyStreak(7)
@@ -85,7 +87,7 @@ public class GamificationSeeder implements CommandLineRunner {
         userRepository.save(User.builder()
                 .username("nightowl_break")
                 .email("nightowl_break@test.com")
-                .password("hashed_password")
+                .password(passwordEncoder.encode("Password123!"))
                 .role(UserRole.USER)
                 .currentDailyStreak(14)
                 .longestDailyStreak(30)
@@ -96,7 +98,7 @@ public class GamificationSeeder implements CommandLineRunner {
         userRepository.save(User.builder()
                 .username("sameday_user")
                 .email("sameday@test.com")
-                .password("hashed_password")
+                .password(passwordEncoder.encode("Password123!"))
                 .role(UserRole.USER)
                 .currentDailyStreak(5)
                 .longestDailyStreak(5)
@@ -107,7 +109,7 @@ public class GamificationSeeder implements CommandLineRunner {
         userRepository.save(User.builder()
                 .username("midsession_user")
                 .email("midsession@test.com")
-                .password("hashed_password")
+                .password(passwordEncoder.encode("Password123!"))
                 .role(UserRole.USER)
                 .pomodoroFlowStreak(3)
                 .sessionDeadline(LocalDateTime.now().plusMinutes(15))
@@ -117,7 +119,7 @@ public class GamificationSeeder implements CommandLineRunner {
         userRepository.save(User.builder()
                 .username("abandoned_user")
                 .email("abandoned@test.com")
-                .password("hashed_password")
+                .password(passwordEncoder.encode("Password123!"))
                 .role(UserRole.USER)
                 .pomodoroFlowStreak(2)
                 .sessionDeadline(LocalDateTime.now().minusHours(2))
