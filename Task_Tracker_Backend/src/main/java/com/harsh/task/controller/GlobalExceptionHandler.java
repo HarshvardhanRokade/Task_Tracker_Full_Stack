@@ -1,10 +1,7 @@
 package com.harsh.task.controller;
 
 import com.harsh.task.domain.dto.ErrorResponseDto;
-import com.harsh.task.exception.InsufficientGemsException;
-import com.harsh.task.exception.PriceChangedException;
-import com.harsh.task.exception.ResourceNotFoundException;
-import com.harsh.task.exception.TaskNotFoundException;
+import com.harsh.task.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -94,5 +91,13 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponseDto(
                         "Price changed to " + ex.getActualCost() + " gems. " + ex.getMessage()
                 ));
+    }
+
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidRefreshToken(
+            InvalidRefreshTokenException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED) // 401
+                .body(new ErrorResponseDto(ex.getMessage()));
     }
 }
