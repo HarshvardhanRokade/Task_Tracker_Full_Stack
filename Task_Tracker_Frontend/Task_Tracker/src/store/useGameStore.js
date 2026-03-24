@@ -1,177 +1,180 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { create } from 'zustand'
+import { devtools, persist } from 'zustand/middleware'
 
-const useGameStore = create(devtools((set, get) => ({
+const useGameStore = create(devtools(persist(
+    (set, get) => ({
 
-  // --- Authentication State ---
-  // ✨ NEW: The secure token that proves the user is logged in
-  accessToken: null, 
-  
-  // Notice we removed the hardcoded '1'. It now starts as null until login.
-  userId: null, 
+        // --- Auth State ---
+        accessToken: null,
+        isAuthenticated: false,
 
-  // --- Player State ---
-  username: 'Loading...',
-  level: 1,
-  currentXp: 0,
-  totalXp: 0,
-  xpToNextLevel: 500,
-  gemBalance: 0,
-  dailyStreak: 0,
-  longestDailyStreak: 0,
-  flowStreak: 0,
-  
-  // --- Gamification Store States ---
-  xpBoostActive: false,
-  currentTheme: 'default',
+        // --- User Identity ---
+        userId: null,
+        username: 'Loading...',
+        level: 1,
+        currentXp: 0,
+        totalXp: 0,
+        xpToNextLevel: 500,
+        gemBalance: 0,
+        dailyStreak: 0,
+        longestDailyStreak: 0,
+        flowStreak: 0,
+        xpBoostActive: false,
+        currentTheme: 'default',
 
-  // --- Task List State ---
-  tasks: [],
+        // --- Task State ---
+        tasks: [],
+        errorMessage: null,
 
-  // --- Global Error State ---
-  errorMessage: null,
+        // --- Session State ---
+        sessionActive: false,
+        sessionPaused: false,
+        currentMultiplier: 1.0,
+        worstPauseTier: null,
 
-  // --- Session State (Focus Page) ---
-  sessionActive: false,
-  sessionPaused: false,
-  currentMultiplier: 1.0,
-  worstPauseTier: null,
+        // --- Reward State ---
+        pendingReward: null,
+        isLevelingUp: false,
 
-  // --- UI State ---
-  pendingReward: null,   // Holds reward payload until animation fires
-  isLevelingUp: false,   // Triggers full-screen level-up overlay
+        // --- Auth Actions ---
+        setAuth: (authData) => {
+            document.documentElement.setAttribute(
+                'data-theme', authData.currentTheme || 'default'
+            )
+            set({
+                accessToken:       authData.accessToken,
+                isAuthenticated:   true,
+                userId:            authData.userId,
+                username:          authData.username,
+                level:             authData.level,
+                currentXp:         authData.currentXp,
+                totalXp:           authData.totalXp,
+                xpToNextLevel:     authData.xpToNextLevel,
+                gemBalance:        authData.gemBalance,
+                dailyStreak:       authData.currentDailyStreak,
+                longestDailyStreak: authData.longestDailyStreak,
+                flowStreak:        authData.pomodoroFlowStreak,
+                xpBoostActive:     authData.xpBoostActive,
+                currentTheme:      authData.currentTheme,
+            })
+        },
 
-  // --- Actions ---
+        clearAuth: () => {
+            document.documentElement.setAttribute('data-theme', 'default')
+            set({
+                accessToken:       null,
+                isAuthenticated:   false,
+                userId:            null,
+                username:          'Loading...',
+                level:             1,
+                currentXp:         0,
+                totalXp:           0,
+                xpToNextLevel:     500,
+                gemBalance:        0,
+                dailyStreak:       0,
+                longestDailyStreak: 0,
+                flowStreak:        0,
+                xpBoostActive:     false,
+                currentTheme:      'default',
+                tasks:             [],
+                pendingReward:     null,
+                isLevelingUp:      false,
+            })
+        },
 
-  // ✨ NEW: Save the token right after login/register
-  setAccessToken: (token) => set({ accessToken: token }),
+        // Keep initializePlayer for the refresh flow
+        initializePlayer: (userData) => {
+            document.documentElement.setAttribute(
+                'data-theme', userData.currentTheme || 'default'
+            )
+            set({
+                userId:            userData.userId,
+                username:          userData.username,
+                level:             userData.level,
+                currentXp:         userData.currentXp,
+                totalXp:           userData.totalXp,
+                xpToNextLevel:     userData.xpToNextLevel,
+                gemBalance:        userData.gemBalance,
+                dailyStreak:       userData.currentDailyStreak,
+                longestDailyStreak: userData.longestDailyStreak,
+                flowStreak:        userData.pomodoroFlowStreak,
+                xpBoostActive:     userData.xpBoostActive,
+                currentTheme:      userData.currentTheme,
+            })
+        },
 
-  // ✨ NEW: Wipe everything clean when the user logs out
-  clearAuth: () => {
-    // Reset the CSS theme back to default
-    document.documentElement.setAttribute('data-theme', 'default');
-    
-    set({
-      accessToken: null,
-      userId: null,
-      username: 'Loading...',
-      level: 1,
-      currentXp: 0,
-      totalXp: 0,
-      xpToNextLevel: 500,
-      gemBalance: 0,
-      dailyStreak: 0,
-      longestDailyStreak: 0,
-      flowStreak: 0,
-      xpBoostActive: false,
-      currentTheme: 'default',
-      tasks: [],
-      sessionActive: false,
-      sessionPaused: false,
-      currentMultiplier: 1.0,
-      worstPauseTier: null,
-      pendingReward: null,
-      isLevelingUp: false,
-      errorMessage: null,
-    });
-  },
+        // --- Game Actions ---
+        applyReward: (rewardDto) => {
+            set((state) => ({
+                currentXp:         rewardDto.currentXp ?? state.currentXp,
+                totalXp:           rewardDto.totalXp ?? state.totalXp,
+                xpToNextLevel:     rewardDto.xpToNextLevel ?? state.xpToNextLevel,
+                level:             rewardDto.newLevel ?? state.level,
+                gemBalance:        state.gemBalance +
+                                   (rewardDto.gemsEarned || 0) +
+                                   (rewardDto.levelUpGemBonus || 0),
+                dailyStreak:       rewardDto.dailyStreak ?? state.dailyStreak,
+                longestDailyStreak: rewardDto.longestDailyStreak ?? state.longestDailyStreak,
+                flowStreak:        rewardDto.flowStreak ?? state.flowStreak,
+                xpBoostActive:     rewardDto.boostConsumed
+                                   ? false : state.xpBoostActive,
+                pendingReward:     rewardDto,
+                isLevelingUp:      rewardDto.didLevelUp || false,
+            }))
+        },
 
-  // 1. Called on app load to hydrate from backend
-  // ✨ UPDATED: Now accepts the accessToken alongside userData
-  initializePlayer: (userData, token) => {
-    // INJECT CSS THEME GLOBALLY ON LOAD!
-    document.documentElement.setAttribute('data-theme', userData.currentTheme || 'default');
-    
-    set({
-      accessToken: token, // ✨ Save the token to state
-      userId: userData.id,
-      username: userData.username,
-      level: userData.level,
-      currentXp: userData.currentXp,
-      totalXp: userData.totalXp,
-      xpToNextLevel: userData.xpToNextLevel,
-      gemBalance: userData.gemBalance,
-      dailyStreak: userData.currentDailyStreak,
-      longestDailyStreak: userData.longestDailyStreak,
-      flowStreak: userData.pomodoroFlowStreak,
-      
-      // Map the backend fields
-      xpBoostActive: userData.xpBoostActive,
-      currentTheme: userData.currentTheme,
-    });
-  },
+        // --- Store Actions ---
+        updateGemBalance:  (newBalance) => set({ gemBalance: newBalance }),
+        setXpBoostActive:  (active) => set({ xpBoostActive: active }),
+        setCurrentTheme:   (theme) => {
+            document.documentElement.setAttribute('data-theme', theme)
+            set({ currentTheme: theme })
+        },
 
-  // 2. Called after task complete or pomodoro complete
-  applyReward: (rewardDto) => {
-    set((state) => ({
-      currentXp: rewardDto.currentXp ?? state.currentXp,
-      totalXp: rewardDto.totalXp ?? state.totalXp,
-      xpToNextLevel: rewardDto.xpToNextLevel ?? state.xpToNextLevel,
-      level: rewardDto.newLevel ?? state.level,
-      gemBalance: state.gemBalance + (rewardDto.gemsEarned || 0) + (rewardDto.levelUpGemBonus || 0),
-      dailyStreak: rewardDto.dailyStreak ?? state.dailyStreak,
-      longestDailyStreak: rewardDto.longestDailyStreak ?? state.longestDailyStreak,
-      flowStreak: rewardDto.flowStreak ?? state.flowStreak,
-      
-      // If the backend says the boost was consumed, turn it off in the UI!
-      xpBoostActive: rewardDto.boostConsumed ? false : state.xpBoostActive,
-      
-      pendingReward: rewardDto,
-      isLevelingUp: rewardDto.didLevelUp || false,
-    }));
-  },
+        // --- Task Actions ---
+        setTasks:    (tasks) => set({ tasks }),
+        addTask:     (task) => set((state) => ({
+            tasks: [...state.tasks, task]
+        })),
+        removeTask:  (taskId) => set((state) => ({
+            tasks: state.tasks.filter(t => t.id !== taskId)
+        })),
+        updateTask:  (updatedTask) => set((state) => ({
+            tasks: state.tasks.map(t =>
+                t.id === updatedTask.id ? updatedTask : t)
+        })),
 
-  // --- Gamification Store Actions ---
-  updateGemBalance: (newBalance) => set({ gemBalance: newBalance }),
-  
-  setXpBoostActive: (isActive) => set({ xpBoostActive: isActive }),
-  
-  setCurrentTheme: (themeName) => {
-    // Apply immediately to the DOM so the UI colors shift in real-time
-    document.documentElement.setAttribute('data-theme', themeName);
-    set({ currentTheme: themeName });
-  },
+        // --- UI Actions ---
+        setError:           (msg) => set({ errorMessage: msg }),
+        clearError:         () => set({ errorMessage: null }),
+        setSessionActive:   (active) => set({ sessionActive: active }),
+        setSessionPaused:   (paused) => set({ sessionPaused: paused }),
+        setMultiplier:      (multiplier) => set({ currentMultiplier: multiplier }),
+        clearPendingReward: () => set({ pendingReward: null, isLevelingUp: false }),
 
-  // 3. Task Actions
-  setTasks: (tasks) => set({ tasks }),
-  addTask: (task) => set((state) => ({ tasks: [...state.tasks, task] })),
-  removeTask: (taskId) => set((state) => ({
-    tasks: state.tasks.filter((t) => t.id !== taskId)
-  })),
-  updateTask: (updatedTask) => set((state) => ({
-    tasks: state.tasks.map((t) => t.id === updatedTask.id ? updatedTask : t)
-  })),
+        // --- Computed ---
+        getLevelName: () => {
+            const level = get().level
+            if (level >= 50) return 'Transcendent Planner'
+            if (level >= 30) return 'Legendary Focuser'
+            if (level >= 20) return 'Deep Work Champion'
+            if (level >= 15) return 'Productivity Sage'
+            if (level >= 10) return 'Flow Master'
+            if (level >= 8)  return 'Flow Initiate'
+            if (level >= 5)  return 'Dedicated Grinder'
+            if (level >= 3)  return 'Focus Seeker'
+            if (level >= 2)  return 'Task Apprentice'
+            return 'Novice Planner'
+        },
+    }),
+    {
+        name: 'game-store',
+        // Only persist the access token — everything else re-fetches
+        partialize: (state) => ({
+            accessToken:     state.accessToken,
+            isAuthenticated: state.isAuthenticated,
+        })
+    }
+)))
 
-  // 4. Error Actions
-  setError: (msg) => set({ errorMessage: msg }),
-  clearError: () => set({ errorMessage: null }),
-
-  // 5. Focus session actions
-  setSessionActive: (active) => set({ sessionActive: active }),
-  setSessionPaused: (paused) => set({ sessionPaused: paused }),
-  setMultiplier: (multiplier) => set({ currentMultiplier: multiplier }),
-
-  // 6. Clear reward after animation completes
-  clearPendingReward: () => set({ 
-    pendingReward: null, 
-    isLevelingUp: false 
-  }),
-
-  // 7. Dynamic Level Names
-  getLevelName: () => {
-    const level = get().level;
-    if (level >= 50) return 'Transcendent Planner';
-    if (level >= 30) return 'Legendary Focuser';
-    if (level >= 20) return 'Deep Work Champion';
-    if (level >= 15) return 'Productivity Sage';
-    if (level >= 10) return 'Flow Master';
-    if (level >= 8)  return 'Flow Initiate';
-    if (level >= 5)  return 'Dedicated Grinder';
-    if (level >= 3)  return 'Focus Seeker';
-    if (level >= 2)  return 'Task Apprentice';
-    return 'Novice Planner';
-  },
-
-})));
-
-export default useGameStore;
+export default useGameStore

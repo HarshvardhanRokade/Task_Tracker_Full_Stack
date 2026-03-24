@@ -1,71 +1,119 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import useGameStore from './store/useGameStore';
-import { userApi } from './api/gameApi';
+import { useEffect, useState } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
+import useGameStore from './store/useGameStore'
+import { authApi } from './api/gameApi'
 
-import Sidebar from './components/sidebar/Sidebar';
-import RewardOverlay from './components/rewards/RewardOverlay';
-import ErrorToast from './components/rewards/ErrorToast';
-import TasksPage from './pages/TaskPage'; // Make sure this matches your exact filename!
-import FocusPage from './pages/FocusPage';
-import DashboardPage from './pages/DashboardPage';
-import StorePage from './pages/StorePage';
+import Sidebar from './components/sidebar/Sidebar'
+import RewardOverlay from './components/rewards/RewardOverlay'
+import ErrorToast from './components/rewards/ErrorToast'
+import ProtectedRoute from './components/ProtectedRoute'
 
-// A temporary placeholder so the Dashboard link doesn't crash
-const DashboardPlaceholder = () => (
-  <motion.div 
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    transition={{ duration: 0.2 }}
-    className="flex items-center justify-center h-full text-xl font-bold"
-    style={{ color: 'var(--text-secondary)' }}
-  >
-    Dashboard Stats Coming Soon...
-  </motion.div>
-);
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import TasksPage from './pages/TaskPage'
+import FocusPage from './pages/FocusPage'
+import DashboardPage from './pages/DashboardPage'
+import StorePage from './pages/StorePage'
+
+const AppLayout = ({ children }) => (
+    <div className="min-h-screen flex overflow-hidden"
+         style={{ backgroundColor: 'var(--bg-dark)' }}>
+        <Sidebar />
+        <main className="flex-1 p-8 overflow-y-auto">
+            {children}
+        </main>
+        <RewardOverlay />
+        <ErrorToast />
+    </div>
+)
 
 function App() {
-  const initializePlayer = useGameStore((state) => state.initializePlayer);
-  const userId = useGameStore((state) => state.userId);
-  const location = useLocation(); // Tracks current route for animations
+    const location = useLocation()
+    const { isAuthenticated, setAuth, clearAuth } = useGameStore()
+    const [initializing, setInitializing] = useState(true)
 
-  useEffect(() => {
-    // Fetch the real data from Spring Boot on mount
-    userApi.getProfile(userId)
-      .then((res) => {
-        initializePlayer(res.data);
-      })
-      .catch((err) => console.error('Failed to load player data.', err));
-  }, [userId, initializePlayer]);
+    useEffect(() => {
+        // On mount — attempt silent refresh to restore session
+        const attemptSilentRefresh = async () => {
+            if (isAuthenticated) {
+                // Already have a token — skip refresh
+                setInitializing(false)
+                return
+            }
 
-  return (
-    <div className="h-screen flex overflow-hidden" style={{ backgroundColor: 'var(--bg-dark)' }}>
-      {/* 1. The Static Sidebar */}
-      <Sidebar />
-      
-      {/* 2. Dynamic Main Content Area */}
-      <main className="flex-1 p-8 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        {/* AnimatePresence handles the exit animations of pages */}
+            try {
+                // Try to refresh using httpOnly cookie
+                const response = await authApi.refresh()
+                setAuth(response.data)
+            } catch {
+                // No valid refresh token — user must log in
+                clearAuth()
+            } finally {
+                setInitializing(false)
+            }
+        }
+
+        attemptSilentRefresh()
+    }, [])
+
+    // Show nothing while checking auth status
+    if (initializing) {
+        return (
+            <div className="min-h-screen flex items-center justify-center"
+                 style={{ backgroundColor: 'var(--bg-dark)',
+                          color: 'var(--text-secondary)' }}>
+                <div className="text-center">
+                    <div className="text-4xl mb-3">🚀</div>
+                    <p className="text-sm">Loading Workspace...</p>
+                </div>
+            </div>
+        )
+    }
+
+    return (
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            {/* Redirect root to tasks */}
-            <Route path="/" element={<Navigate to="/tasks" replace />} />
-            
-            <Route path="/tasks" element={<TasksPage />} />
-            <Route path="/focus" element={<FocusPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path='/store' element={<StorePage/>}/>
-          </Routes>
-        </AnimatePresence>
-      </main>
+            <Routes location={location} key={location.pathname}>
+                {/* Public routes */}
+                <Route path="/login"    element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
 
-      {/* 3. Global Overlays */}
-      <RewardOverlay /> 
-      <ErrorToast />
-    </div>
-  );
+                {/* Protected routes */}
+                <Route path="/tasks" element={
+                    <ProtectedRoute>
+                        <AppLayout>
+                            <TasksPage />
+                        </AppLayout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/focus" element={
+                    <ProtectedRoute>
+                        <AppLayout>
+                            <FocusPage />
+                        </AppLayout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                        <AppLayout>
+                            <DashboardPage />
+                        </AppLayout>
+                    </ProtectedRoute>
+                } />
+                <Route path="/store" element={
+                    <ProtectedRoute>
+                        <AppLayout>
+                            <StorePage />
+                        </AppLayout>
+                    </ProtectedRoute>
+                } />
+
+                {/* Default redirect */}
+                <Route path="/"   element={<Navigate to="/tasks" replace />} />
+                <Route path="*"   element={<Navigate to="/tasks" replace />} />
+            </Routes>
+        </AnimatePresence>
+    )
 }
 
-export default App;
+export default App
