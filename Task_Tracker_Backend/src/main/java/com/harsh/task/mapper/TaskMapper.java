@@ -9,7 +9,8 @@ import com.harsh.task.entity.Task;
 
 public interface TaskMapper {
 
-    CreateTaskRequest fromDto (CreateTaskRequestDto dto);
+
+    CreateTaskRequest fromDto(CreateTaskRequestDto dto, Long userId);
 
     TaskDto toDto (Task task);
 

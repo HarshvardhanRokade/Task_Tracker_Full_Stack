@@ -1,17 +1,13 @@
 package com.harsh.task.controller;
 
 import com.harsh.task.domain.dto.PomodoroRewardDto;
+import com.harsh.task.security.AuthenticatedUser;
 import com.harsh.task.service.PomodoroService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * Pomodoro Session Management API.
- * * Note: All endpoints return 404 if the userId is not found.
- * The /complete endpoint favors degraded success and will return a 200 OK
- * with a PomodoroRewardDto even if the session state was invalid or expired.
- */
 @RestController
 @RequestMapping("/api/pomodoro")
 @RequiredArgsConstructor
@@ -20,32 +16,38 @@ public class PomodoroController {
     private final PomodoroService pomodoroService;
 
     @PostMapping("/start")
-    public ResponseEntity<Void> startSession(@RequestParam Long userId) {
-        pomodoroService.startSession(userId);
+    public ResponseEntity<Void> startSession(
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        pomodoroService.startSession(currentUser.getUserId());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/pause")
-    public ResponseEntity<Void> pauseSession(@RequestParam Long userId) {
-        pomodoroService.pauseSession(userId);
+    public ResponseEntity<Void> pauseSession(
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        pomodoroService.pauseSession(currentUser.getUserId());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/resume")
-    public ResponseEntity<Void> resumeSession(@RequestParam Long userId) {
-        pomodoroService.resumeSession(userId);
+    public ResponseEntity<Void> resumeSession(
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        pomodoroService.resumeSession(currentUser.getUserId());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/complete")
-    public ResponseEntity<PomodoroRewardDto> completeSession(@RequestParam Long userId) {
-        PomodoroRewardDto reward = pomodoroService.completeSession(userId);
-        return ResponseEntity.ok(reward);
+    public ResponseEntity<PomodoroRewardDto> completeSession(
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        return ResponseEntity.ok(
+                pomodoroService.completeSession(currentUser.getUserId())
+        );
     }
 
     @PostMapping("/forfeit")
-    public ResponseEntity<Void> forfeitSession(@RequestParam Long userId) {
-        pomodoroService.forfeitSession(userId);
+    public ResponseEntity<Void> forfeitSession(
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        pomodoroService.forfeitSession(currentUser.getUserId());
         return ResponseEntity.ok().build();
     }
 }

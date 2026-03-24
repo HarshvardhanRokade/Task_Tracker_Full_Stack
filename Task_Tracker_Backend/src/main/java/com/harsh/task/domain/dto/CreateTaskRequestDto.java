@@ -33,10 +33,8 @@ public record CreateTaskRequestDto(
         TaskPriority priority,
 
         @Nullable
-        List<String> tags,
+        List<String> tags
 
-        @NotNull(message = ERROR_MESSAGE_USER_ID)
-                Long userId
 ) {
 
     private static final String ERROR_MESSAGE_TITLE_LENGTH =
@@ -54,6 +52,4 @@ public record CreateTaskRequestDto(
     private static final String ERROR_MESSAGE_PRIORITY =
             "Task priority must be provided";
 
-    private static final String ERROR_MESSAGE_USER_ID =
-            "User ID must be provided";
 }

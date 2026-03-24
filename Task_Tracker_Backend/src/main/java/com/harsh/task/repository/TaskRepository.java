@@ -5,10 +5,10 @@ import com.harsh.task.entity.TaskPriority;
 import com.harsh.task.entity.TaskStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph; // ✨ NEW IMPORT
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -18,8 +18,10 @@ import java.util.UUID;
 
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 
+    // ✨ THE FIX: Eagerly fetch the tags collection in the same query
+    @EntityGraph(attributePaths = {"tags"})
     @Query("SELECT DISTINCT t FROM Task t LEFT JOIN t.tags tag WHERE " +
-            "t.user.id = :userId AND " + // <--- THIS WAS MISSING!
+            "t.user.id = :userId AND " +
             "(:search IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
             "(:status IS NULL OR t.status = :status) AND " +
             "(:priority IS NULL OR t.priority = :priority) AND " +
@@ -33,7 +35,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             Pageable pageable
     );
 
-    // Ownership-safe list fetch
+    // ✨ THE FIX: Eagerly fetch the tags collection here too
+    @EntityGraph(attributePaths = {"tags"})
     Page<Task> findByUserId(Long userId, Pageable pageable);
 
     // Ownership-safe single fetch (prevents IDOR vulnerabilities)
@@ -86,7 +89,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             Pageable pageable
     );
 
-    // Add to TaskRepository
+    // Total XP by Day
     @Query("SELECT DATE(t.updated), SUM(CASE " +
             "WHEN t.priority = 'HIGH' THEN 100 " +
             "WHEN t.priority = 'MEDIUM' THEN 75 " +

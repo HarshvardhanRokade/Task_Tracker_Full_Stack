@@ -3,10 +3,12 @@ package com.harsh.task.controller;
 import com.harsh.task.domain.dto.PurchaseRequestDto;
 import com.harsh.task.domain.dto.PurchaseResultDto;
 import com.harsh.task.domain.dto.UserInventoryDto;
+import com.harsh.task.security.AuthenticatedUser;
 import com.harsh.task.service.StoreService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,21 +19,28 @@ public class StoreController {
     private final StoreService storeService;
 
     @GetMapping("/inventory")
-    public ResponseEntity<UserInventoryDto> getInventory(@RequestParam Long userId) {
-        return ResponseEntity.ok(storeService.getInventory(userId));
+    public ResponseEntity<UserInventoryDto> getInventory(
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        return ResponseEntity.ok(
+                storeService.getInventory(currentUser.getUserId())
+        );
     }
 
     @PostMapping("/purchase")
     public ResponseEntity<PurchaseResultDto> purchaseItem(
-            @RequestParam Long userId,
-            @Valid @RequestBody PurchaseRequestDto request) {
-        return ResponseEntity.ok(storeService.purchaseItem(userId, request));
+            @Valid @RequestBody PurchaseRequestDto request,
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        return ResponseEntity.ok(
+                storeService.purchaseItem(currentUser.getUserId(), request)
+        );
     }
 
     @PostMapping("/equip-theme")
     public ResponseEntity<PurchaseResultDto> equipTheme(
-            @RequestParam Long userId,
-            @RequestParam String themeName) {
-        return ResponseEntity.ok(storeService.equipTheme(userId, themeName));
+            @RequestParam String themeName,
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        return ResponseEntity.ok(
+                storeService.equipTheme(currentUser.getUserId(), themeName)
+        );
     }
 }

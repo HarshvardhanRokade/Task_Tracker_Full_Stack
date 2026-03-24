@@ -1,9 +1,11 @@
 package com.harsh.task.controller;
 
 import com.harsh.task.domain.dto.UserProfileDto;
+import com.harsh.task.security.AuthenticatedUser;
 import com.harsh.task.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -13,8 +15,11 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserProfileDto> getProfile(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.getProfile(userId));
+    @GetMapping("/me")
+    public ResponseEntity<UserProfileDto> getMyProfile(
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        return ResponseEntity.ok(
+                userService.getProfile(currentUser.getUserId())
+        );
     }
 }

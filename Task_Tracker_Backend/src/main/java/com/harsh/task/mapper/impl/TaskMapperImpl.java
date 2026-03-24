@@ -16,7 +16,7 @@ import java.util.List;
 public class TaskMapperImpl implements TaskMapper {
 
     @Override
-    public CreateTaskRequest fromDto(CreateTaskRequestDto dto) {
+    public CreateTaskRequest fromDto(CreateTaskRequestDto dto, Long userId) {
         return new CreateTaskRequest(
                 dto.title(),
                 dto.description(),
@@ -24,7 +24,7 @@ public class TaskMapperImpl implements TaskMapper {
                 dto.reminderDateTime(),
                 dto.priority(),
                 dto.tags(),
-                dto.userId()
+                userId  // From token, not from request body
         );
     }
 

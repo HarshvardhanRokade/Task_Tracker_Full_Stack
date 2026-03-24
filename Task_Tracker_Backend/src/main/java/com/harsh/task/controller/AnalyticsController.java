@@ -1,9 +1,11 @@
 package com.harsh.task.controller;
 
 import com.harsh.task.domain.dto.*;
+import com.harsh.task.security.AuthenticatedUser;
 import com.harsh.task.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,31 +17,37 @@ public class AnalyticsController {
 
     @GetMapping("/summary")
     public ResponseEntity<AnalyticsSummaryDto> getSummary(
-            @RequestParam Long userId) {
-        return ResponseEntity.ok(analyticsService.getSummary(userId));
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+        return ResponseEntity.ok(
+                analyticsService.getSummary(currentUser.getUserId())
+        );
     }
 
     @GetMapping("/tasks")
     public ResponseEntity<TaskAnalyticsDto> getTaskAnalytics(
-            @RequestParam Long userId,
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
             @RequestParam(defaultValue = "WEEK") AnalyticsPeriod period) {
         return ResponseEntity.ok(
-                analyticsService.getTaskAnalytics(userId, period));
+                analyticsService.getTaskAnalytics(currentUser.getUserId(), period)
+        );
     }
 
     @GetMapping("/pomodoro")
     public ResponseEntity<PomodoroAnalyticsDto> getPomodoroAnalytics(
-            @RequestParam Long userId,
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
             @RequestParam(defaultValue = "WEEK") AnalyticsPeriod period) {
         return ResponseEntity.ok(
-                analyticsService.getPomodoroAnalytics(userId, period));
+                analyticsService.getPomodoroAnalytics(currentUser.getUserId(), period)
+        );
     }
 
     @GetMapping("/progression")
     public ResponseEntity<ProgressionAnalyticsDto> getProgressionAnalytics(
-            @RequestParam Long userId,
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
             @RequestParam(defaultValue = "MONTH") AnalyticsPeriod period) {
         return ResponseEntity.ok(
-                analyticsService.getProgressionAnalytics(userId, period));
+                analyticsService.getProgressionAnalytics(
+                        currentUser.getUserId(), period)
+        );
     }
 }

@@ -5,17 +5,13 @@ const BASE_URL = 'http://localhost:8080/api';
 
 const apiClient = axios.create({ baseURL: BASE_URL });
 
-// Interceptor: Automatically attach userId to every request
 apiClient.interceptors.request.use((config) => {
-  const userId = useGameStore.getState().userId;
-  
-  // If params exist, add userId to them. If not, create params object.
-  config.params = { ...config.params, userId };
-  
-  // Note: For POST/PUT requests where userId might need to be in the URL path 
-  // (like the Pomodoro endpoints), we handle that in the specific API calls below.
-  return config;
-});
+    const accessToken = useGameStore.getState().accessToken
+    if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`
+    }
+    return config
+})
 
 export const taskApi = {
   getAll: (params) => apiClient.get('/v1/tasks', { params }),
@@ -35,7 +31,7 @@ export const pomodoroApi = {
 };
 
 export const userApi = {
-  getProfile: (userId) => apiClient.get(`/users/${userId}`),
+  getProfile: () => apiClient.get('/users/me'),
 };
 
 export const tagApi = {

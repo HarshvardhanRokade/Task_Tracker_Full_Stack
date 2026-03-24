@@ -3,8 +3,12 @@ import { devtools } from 'zustand/middleware';
 
 const useGameStore = create(devtools((set, get) => ({
 
-  // --- User Identity (Temporary until auth is built) ---
-  userId: 1,
+  // --- Authentication State ---
+  // ✨ NEW: The secure token that proves the user is logged in
+  accessToken: null, 
+  
+  // Notice we removed the hardcoded '1'. It now starts as null until login.
+  userId: null, 
 
   // --- Player State ---
   username: 'Loading...',
@@ -17,7 +21,7 @@ const useGameStore = create(devtools((set, get) => ({
   longestDailyStreak: 0,
   flowStreak: 0,
   
-  // ✨ NEW: Gamification Store States
+  // --- Gamification Store States ---
   xpBoostActive: false,
   currentTheme: 'default',
 
@@ -39,12 +43,47 @@ const useGameStore = create(devtools((set, get) => ({
 
   // --- Actions ---
 
+  // ✨ NEW: Save the token right after login/register
+  setAccessToken: (token) => set({ accessToken: token }),
+
+  // ✨ NEW: Wipe everything clean when the user logs out
+  clearAuth: () => {
+    // Reset the CSS theme back to default
+    document.documentElement.setAttribute('data-theme', 'default');
+    
+    set({
+      accessToken: null,
+      userId: null,
+      username: 'Loading...',
+      level: 1,
+      currentXp: 0,
+      totalXp: 0,
+      xpToNextLevel: 500,
+      gemBalance: 0,
+      dailyStreak: 0,
+      longestDailyStreak: 0,
+      flowStreak: 0,
+      xpBoostActive: false,
+      currentTheme: 'default',
+      tasks: [],
+      sessionActive: false,
+      sessionPaused: false,
+      currentMultiplier: 1.0,
+      worstPauseTier: null,
+      pendingReward: null,
+      isLevelingUp: false,
+      errorMessage: null,
+    });
+  },
+
   // 1. Called on app load to hydrate from backend
-  initializePlayer: (userData) => {
-    // ✨ INJECT CSS THEME GLOBALLY ON LOAD!
+  // ✨ UPDATED: Now accepts the accessToken alongside userData
+  initializePlayer: (userData, token) => {
+    // INJECT CSS THEME GLOBALLY ON LOAD!
     document.documentElement.setAttribute('data-theme', userData.currentTheme || 'default');
     
     set({
+      accessToken: token, // ✨ Save the token to state
       userId: userData.id,
       username: userData.username,
       level: userData.level,
@@ -56,7 +95,7 @@ const useGameStore = create(devtools((set, get) => ({
       longestDailyStreak: userData.longestDailyStreak,
       flowStreak: userData.pomodoroFlowStreak,
       
-      // ✨ Map the new backend fields
+      // Map the backend fields
       xpBoostActive: userData.xpBoostActive,
       currentTheme: userData.currentTheme,
     });
@@ -74,7 +113,7 @@ const useGameStore = create(devtools((set, get) => ({
       longestDailyStreak: rewardDto.longestDailyStreak ?? state.longestDailyStreak,
       flowStreak: rewardDto.flowStreak ?? state.flowStreak,
       
-      // ✨ FIXED: If the backend says the boost was consumed, turn it off in the UI!
+      // If the backend says the boost was consumed, turn it off in the UI!
       xpBoostActive: rewardDto.boostConsumed ? false : state.xpBoostActive,
       
       pendingReward: rewardDto,
@@ -82,7 +121,7 @@ const useGameStore = create(devtools((set, get) => ({
     }));
   },
 
-  // ✨ NEW: Gamification Store Actions
+  // --- Gamification Store Actions ---
   updateGemBalance: (newBalance) => set({ gemBalance: newBalance }),
   
   setXpBoostActive: (isActive) => set({ xpBoostActive: isActive }),

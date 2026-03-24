@@ -10,49 +10,47 @@ import com.harsh.task.entity.Task;
 import com.harsh.task.entity.TaskPriority;
 import com.harsh.task.entity.TaskStatus;
 import com.harsh.task.mapper.TaskMapper;
+import com.harsh.task.security.AuthenticatedUser;
 import com.harsh.task.service.CalendarService;
 import com.harsh.task.service.TaskService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
-// @CrossOrigin removed because CorsConfig handles this globally now!
 @RestController
-@RequestMapping(path = "/api/v1/tasks")
+@RequestMapping("/api/v1/tasks")
+@RequiredArgsConstructor
 public class TaskController {
 
     private final TaskService taskService;
     private final TaskMapper taskMapper;
     private final CalendarService calendarService;
 
-    public TaskController (TaskService taskService , TaskMapper taskMapper , CalendarService calendarService){
-        this.taskService = taskService;
-        this.taskMapper = taskMapper;
-        this.calendarService = calendarService;
-    }
-
     @PostMapping
     public ResponseEntity<TaskDto> createTask(
-            @Valid @RequestBody CreateTaskRequestDto createTaskRequestDto) {
+            @Valid @RequestBody CreateTaskRequestDto createTaskRequestDto,
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
 
-        CreateTaskRequest taskToCreate = taskMapper.fromDto(createTaskRequestDto);
+        // Inject userId from token into the request
+        CreateTaskRequest taskToCreate = taskMapper.fromDto(
+                createTaskRequestDto, currentUser.getUserId()
+        );
         Task createdTask = taskService.createTask(taskToCreate);
-        TaskDto createdTaskDto = taskMapper.toDto(createdTask);
-
-        return new ResponseEntity<>(createdTaskDto , HttpStatus.CREATED);
+        return new ResponseEntity<>(taskMapper.toDto(createdTask), HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<Page<TaskDto>> listTasks(
-            @RequestParam Long userId, // <-- SECURED: Only fetch this user's tasks
+            @AuthenticationPrincipal AuthenticatedUser currentUser,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) TaskPriority priority,
@@ -60,83 +58,101 @@ public class TaskController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page , size , Sort.by(Sort.Direction.ASC , "created"));
+        Long userId = currentUser.getUserId();
+        Pageable pageable = PageRequest.of(
+                page, size, Sort.by(Sort.Direction.ASC, "created")
+        );
 
-        Page<Task> taskPage;
-        if(search != null || status != null || priority != null || tag != null) {
-            taskPage = taskService.filterTasks(userId, search, status, priority, tag, pageable);
-        } else {
-            taskPage = taskService.listTasks(userId, pageable);
-        }
+        Page<Task> taskPage = (search != null || status != null
+                || priority != null || tag != null)
+                ? taskService.filterTasks(userId, search, status, priority, tag, pageable)
+                : taskService.listTasks(userId, pageable);
 
-        Page<TaskDto> taskDtos = taskPage.map(taskMapper::toDto);
-        return ResponseEntity.ok(taskDtos);
+        return ResponseEntity.ok(taskPage.map(taskMapper::toDto));
     }
 
-    @PutMapping(path = "/{taskId}")
+    @GetMapping("/{taskId}")
+    public ResponseEntity<TaskDto> getTask(
+            @PathVariable UUID taskId,
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+
+        Task task = taskService.getTask(taskId, currentUser.getUserId());
+        return ResponseEntity.ok(taskMapper.toDto(task));
+    }
+
+    @PutMapping("/{taskId}")
     public ResponseEntity<TaskDto> updateTask(
             @PathVariable UUID taskId,
-            @RequestParam Long userId, // <-- SECURED
-            @Valid @RequestBody UpdateTaskRequestDto updateTaskRequestDto) {
+            @Valid @RequestBody UpdateTaskRequestDto updateTaskRequestDto,
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
 
-        UpdateTaskRequest updateTaskRequest = taskMapper.fromDto(updateTaskRequestDto);
-        Task updatedTask = taskService.updateTask(taskId, updateTaskRequest, userId);
-        TaskDto taskMapperDto = taskMapper.toDto(updatedTask);
-
-        return new ResponseEntity<>(taskMapperDto , HttpStatus.OK);
+        UpdateTaskRequest updateRequest = taskMapper.fromDto(updateTaskRequestDto);
+        Task updated = taskService.updateTask(
+                taskId, updateRequest, currentUser.getUserId()
+        );
+        return ResponseEntity.ok(taskMapper.toDto(updated));
     }
 
-    @DeleteMapping(path = "/{taskId}")
+    @DeleteMapping("/{taskId}")
     public ResponseEntity<Void> deleteTask(
             @PathVariable UUID taskId,
-            @RequestParam Long userId) { // <-- SECURED: Can only delete their own task
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
 
-        taskService.deleteTask(taskId, userId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        taskService.deleteTask(taskId, currentUser.getUserId());
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(path = "/{taskId}/pomodoro")
-    public ResponseEntity<TaskDto> completePomodoro(
-            @PathVariable UUID taskId,
-            @RequestParam Long userId) { // <-- SECURED
-
-        Task updatedTask = taskService.completePomodoro(taskId, userId);
-        TaskDto taskDto = taskMapper.toDto(updatedTask);
-        return new ResponseEntity<>(taskDto , HttpStatus.OK);
-    }
-
-    @GetMapping(path = "/{taskId}/calendar")
-    public ResponseEntity<byte []> downloadCalendarEvent(
-            @PathVariable UUID taskId,
-            @RequestParam Long userId) { // <-- SECURED
-
-        Task task = taskService.getTask(taskId, userId);
-        String icsContent = calendarService.generateIcsFile(task);
-        byte[] calendarBytes = icsContent.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-
-        return ResponseEntity.ok()
-                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"task-" + task.getTitle().replaceAll("[^a-zA-Z0-9.-]", "_") + ".ics\"")
-                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/calendar")
-                .body(calendarBytes);
-    }
-
-    @PutMapping(path = "/{taskId}/status")
+    @PutMapping("/{taskId}/status")
     public ResponseEntity<TaskDto> updateTaskStatus(
             @PathVariable UUID taskId,
-            @RequestParam Long userId, // <-- SECURED
-            @RequestParam TaskStatus status) {
+            @RequestParam TaskStatus status,
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
 
-        Task updatedTask = taskService.updateTaskStatus(taskId, status, userId);
-        TaskDto taskDto = taskMapper.toDto(updatedTask);
-        return new ResponseEntity<>(taskDto , HttpStatus.OK);
+        Task updated = taskService.updateTaskStatus(
+                taskId, status, currentUser.getUserId()
+        );
+        return ResponseEntity.ok(taskMapper.toDto(updated));
     }
 
     @PostMapping("/{taskId}/complete")
     public ResponseEntity<GamificationResultDto> completeTask(
             @PathVariable UUID taskId,
-            @RequestParam Long userId) { // <-- SECURED
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
 
-        GamificationResultDto result = taskService.completeTask(taskId, userId);
+        GamificationResultDto result = taskService.completeTask(
+                taskId, currentUser.getUserId()
+        );
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/{taskId}/pomodoro")
+    public ResponseEntity<TaskDto> completePomodoro(
+            @PathVariable UUID taskId,
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+
+        Task updated = taskService.completePomodoro(
+                taskId, currentUser.getUserId()
+        );
+        return ResponseEntity.ok(taskMapper.toDto(updated));
+    }
+
+    @GetMapping("/{taskId}/calendar")
+    public ResponseEntity<byte[]> downloadCalendarEvent(
+            @PathVariable UUID taskId,
+            @AuthenticationPrincipal AuthenticatedUser currentUser) {
+
+        Task task = taskService.getTask(taskId, currentUser.getUserId());
+        String icsContent = calendarService.generateIcsFile(task);
+        byte[] calendarBytes = icsContent.getBytes(
+                java.nio.charset.StandardCharsets.UTF_8
+        );
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition",
+                        "attachment; filename=\"task-" +
+                                task.getTitle().replaceAll("[^a-zA-Z0-9.-]", "_") +
+                                ".ics\"")
+                .header("Content-Type", "text/calendar")
+                .body(calendarBytes);
     }
 }
