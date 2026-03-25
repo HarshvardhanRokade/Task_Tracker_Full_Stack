@@ -1,8 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PomodoroTimer from '../components/pomodoro/PomodoroTimer';
+import { SkeletonBox } from '../components/ui/Skeleton';
 
 const FocusPage = () => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Artificial delay to match the loading feel of the rest of the app 
+  // and prevent harsh layout shifts while the PomodoroTimer mounts
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl mx-auto py-12">
+        {/* Header Skeleton */}
+        <div className="flex flex-col items-center mb-10">
+          <SkeletonBox width="20rem" height="3rem" className="mb-4 rounded-xl" />
+          <SkeletonBox width="28rem" height="1.5rem" className="mb-2 rounded-md" />
+          <SkeletonBox width="24rem" height="1.5rem" className="rounded-md" />
+        </div>
+        
+        {/* Timer Engine Skeleton (Matches the circular timer) */}
+        <div className="flex justify-center mb-12">
+          <SkeletonBox width="300px" height="300px" className="rounded-full" />
+        </div>
+
+        {/* Rules Legend Skeleton */}
+        <div className="max-w-md mx-auto">
+          <SkeletonBox width="100%" height="14rem" className="rounded-xl" />
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}

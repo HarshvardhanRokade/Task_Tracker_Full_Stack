@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { storeApi } from '../api/gameApi';
 import useGameStore from '../store/useGameStore';
+import { SkeletonBox } from '../components/ui/Skeleton';
 
 const STORE_ITEMS = [
   { id: 'STREAK_FREEZE', title: 'Streak Shield', description: 'Auto-activates if you miss a day. Protects your hard-earned streak. No expiry.', icon: '🛡️', type: 'PROTECTION', dynamicPrice: true },
@@ -33,8 +34,13 @@ const StorePage = () => {
   const [errorMessage, setErrorMessage] = useState(null);
 
   const fetchInventory = async () => {
+    setIsLoading(true);
     try {
-      const response = await storeApi.getInventory();
+      // ✨ THE FIX: Added 400ms artificial delay to prevent skeleton flashing
+      const [response] = await Promise.all([
+        storeApi.getInventory(),
+        new Promise(resolve => setTimeout(resolve, 400))
+      ]);
       setInventory(response.data);
     } catch (error) {
       console.error("Failed to load inventory", error);
@@ -82,123 +88,176 @@ const StorePage = () => {
     }
   };
 
-  if (isLoading) return <div className="text-center py-20 text-white opacity-50">Opening the Tavern...</div>;
-
   const visibleItems = STORE_ITEMS.filter(item => item.type === activeTab);
 
+  // ✨ THE FIX: Wrapped the entire return in AnimatePresence with keys
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto py-8">
-      
-      {/* HEADER */}
-      <div className="flex justify-between items-end mb-8 bg-[var(--surface-raised)] p-6 rounded-2xl border border-[var(--border-subtle)] shadow-lg">
-        <div>
-          <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">The Tavern</h1>
-          <p className="text-[var(--text-secondary)]">Spend your hard-earned gems wisely.</p>
-        </div>
-        <div className="text-right">
-          <div className="text-sm text-[var(--text-secondary)] font-bold mb-1">YOUR BALANCE</div>
-          <div className="text-4xl font-black text-[var(--xp-blue)] flex items-center gap-2">💎 {gemBalance}</div>
-        </div>
-      </div>
-
-      {/* TABS */}
-      <div className="flex gap-4 mb-6 border-b border-[var(--border-subtle)] pb-2">
-        {TABS.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 font-bold text-sm transition-colors relative ${activeTab === tab ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-white'}`}
-          >
-            {tab}
-            {activeTab === tab && <motion.div layoutId="storeTab" className="absolute bottom-[-8px] left-0 right-0 h-1 bg-[var(--xp-blue)] rounded-t-md" />}
-          </button>
-        ))}
-      </div>
-
-      {/* ITEM GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AnimatePresence mode="popLayout">
-          {visibleItems.map(item => {
-            const cost = item.dynamicPrice ? inventory.streakFreezeCost : item.basePrice;
-            const canAfford = gemBalance >= cost;
-            const isCosmetic = item.type === 'COSMETICS';
-            const isOwned = isCosmetic && inventory?.ownedThemes?.includes(item.themeName);
-            const isEquipped = isCosmetic && inventory?.currentTheme === item.themeName;
-            const isBoostActive = item.id === 'XP_BOOST' && inventory?.xpBoostActive;
-            const isFreezeMaxed = item.id === 'STREAK_FREEZE' && inventory?.streakFreezesOwned >= 5;
-
-            let displayTitle = item.title;
-            if (item.id === 'STREAK_FREEZE') {
-              if (cost === 100) displayTitle = 'Streak Aegis';
-              if (cost === 200) displayTitle = 'Streak Relic';
-            }
-
-            return (
-              <motion.div 
-                layout
-                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                key={item.id + (item.themeName || '')} 
-                className={`p-5 rounded-2xl border transition-all ${isBoostActive ? 'border-[var(--flow-green)] shadow-[0_0_15px_rgba(46,204,113,0.2)]' : 'border-[var(--border-subtle)]'} bg-[var(--surface-base)] relative overflow-hidden`}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="text-4xl">{item.icon}</div>
-                  {!isOwned && !isBoostActive && !isFreezeMaxed && (
-                    <div className={`font-black text-lg ${canAfford ? 'text-[var(--xp-blue)]' : 'text-red-400 opacity-70'}`}>{cost} 💎</div>
-                  )}
-                </div>
-                
-                <h3 className="text-xl font-bold text-white mb-1">{displayTitle}</h3>
-                <p className="text-sm text-[var(--text-secondary)] mb-6 h-10">{item.description}</p>
-                
-                {item.id === 'STREAK_FREEZE' && (
-                  <div className="text-xs font-bold text-[var(--text-secondary)] mb-3 bg-[var(--surface-raised)] inline-block px-2 py-1 rounded-md">
-                    Owned: {inventory.streakFreezesOwned} / 5
-                  </div>
-                )}
-
-                {isEquipped ? (
-                  <button disabled className="w-full py-2.5 rounded-xl font-bold bg-white/10 text-white cursor-not-allowed">EQUIPPED</button>
-                ) : isOwned ? (
-                  <button onClick={() => handleEquip(item.themeName)} disabled={isProcessing} className="w-full py-2.5 rounded-xl font-bold border border-[var(--xp-blue)] text-[var(--xp-blue)] hover:bg-[var(--xp-blue)] hover:text-white transition-colors">Equip Theme</button>
-                ) : isBoostActive ? (
-                  <button disabled className="w-full py-2.5 rounded-xl font-bold bg-[var(--flow-green)] text-black animate-pulse">ACTIVE</button>
-                ) : isFreezeMaxed ? (
-                  <button disabled className="w-full py-2.5 rounded-xl font-bold bg-white/10 text-[var(--text-secondary)] cursor-not-allowed">MAX OWNED</button>
-                ) : canAfford ? (
-                  <button onClick={() => setConfirmItem(item)} className="w-full py-2.5 rounded-xl font-bold bg-[var(--surface-raised)] text-white border border-[var(--border-subtle)] hover:border-[var(--xp-blue)] hover:text-[var(--xp-blue)] transition-colors">Purchase</button>
-                ) : (
-                  <button disabled className="w-full py-2.5 rounded-xl font-bold bg-red-900/20 text-red-400 cursor-not-allowed border border-red-900/50">Need {cost - gemBalance} more</button>
-                )}
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
-      </div>
-
-      {/* CONFIRMATION MODAL */}
-      <AnimatePresence>
-        {confirmItem && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-[var(--surface-base)] border border-[var(--border-subtle)] p-6 rounded-2xl max-w-sm w-full shadow-2xl"
-            >
-              <h2 className="text-2xl font-bold text-white mb-2">Confirm Purchase</h2>
-              <p className="text-[var(--text-secondary)] mb-6">
-                Buy <strong>{confirmItem.title}</strong> for <strong className="text-[var(--xp-blue)]">{confirmItem.dynamicPrice ? inventory.streakFreezeCost : confirmItem.basePrice} gems</strong>?
-              </p>
-              
-              {errorMessage && <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 text-red-200 rounded-lg text-sm">{errorMessage}</div>}
-
-              <div className="flex gap-3">
-                <button onClick={() => { setConfirmItem(null); setErrorMessage(null); }} disabled={isProcessing} className="flex-1 py-2 rounded-xl font-bold text-[var(--text-secondary)] bg-[var(--surface-raised)] hover:text-white transition-colors">Cancel</button>
-                <button onClick={handlePurchase} disabled={isProcessing} className="flex-1 py-2 rounded-xl font-bold text-black bg-[var(--flow-green)] hover:scale-105 active:scale-95 transition-transform">{isProcessing ? '⌛' : 'Confirm'}</button>
-              </div>
-            </motion.div>
+    <AnimatePresence mode="wait">
+      {isLoading ? (
+        <motion.div 
+          key="skeleton"
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          exit={{ opacity: 0, transition: { duration: 0.15 } }}
+          className="max-w-4xl mx-auto py-8"
+        >
+          {/* Header Skeleton */}
+          <div className="flex justify-between items-end mb-8 bg-[var(--surface-raised)] p-6 rounded-2xl border border-[var(--border-subtle)] shadow-lg">
+            <div>
+              <SkeletonBox width="14rem" height="2.5rem" className="mb-2 rounded-lg" />
+              <SkeletonBox width="18rem" height="1.2rem" className="rounded-md" />
+            </div>
+            <div className="flex flex-col items-end">
+              <SkeletonBox width="7rem" height="1rem" className="mb-2 rounded-md" />
+              <SkeletonBox width="10rem" height="2.5rem" className="rounded-lg" />
+            </div>
           </div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+
+          {/* Tabs Skeleton */}
+          <div className="flex gap-4 mb-6 border-b border-[var(--border-subtle)] pb-2">
+            {[1, 2, 3].map((i) => (
+              <SkeletonBox key={i} width="7rem" height="2rem" className="rounded-lg" />
+            ))}
+          </div>
+
+          {/* Store Items Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-base)]">
+                <div className="flex justify-between items-start mb-4">
+                  <SkeletonBox width="3rem" height="3rem" className="rounded-xl" />
+                  <SkeletonBox width="4rem" height="1.5rem" className="rounded-md" />
+                </div>
+                <SkeletonBox width="60%" height="1.75rem" className="mb-3 rounded-md" />
+                <div className="mb-6 h-10 flex flex-col gap-2">
+                  <SkeletonBox width="90%" height="0.875rem" className="rounded-md" />
+                  <SkeletonBox width="70%" height="0.875rem" className="rounded-md" />
+                </div>
+                <SkeletonBox width="100%" height="2.5rem" className="rounded-xl mt-2" />
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div 
+          key="content"
+          initial={{ opacity: 0, y: 10 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          exit={{ opacity: 0, y: -10, transition: { duration: 0.15 } }}
+          className="max-w-4xl mx-auto py-8"
+        >
+          {/* HEADER */}
+          <div className="flex justify-between items-end mb-8 bg-[var(--surface-raised)] p-6 rounded-2xl border border-[var(--border-subtle)] shadow-lg">
+            <div>
+              <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">The Tavern</h1>
+              <p className="text-[var(--text-secondary)]">Spend your hard-earned gems wisely.</p>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-[var(--text-secondary)] font-bold mb-1">YOUR BALANCE</div>
+              <div className="text-4xl font-black text-[var(--xp-blue)] flex items-center gap-2">💎 {gemBalance}</div>
+            </div>
+          </div>
+
+          {/* TABS */}
+          <div className="flex gap-4 mb-6 border-b border-[var(--border-subtle)] pb-2">
+            {TABS.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 font-bold text-sm transition-colors relative ${activeTab === tab ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-white'}`}
+              >
+                {tab}
+                {activeTab === tab && <motion.div layoutId="storeTab" className="absolute bottom-[-8px] left-0 right-0 h-1 bg-[var(--xp-blue)] rounded-t-md" />}
+              </button>
+            ))}
+          </div>
+
+          {/* ITEM GRID */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <AnimatePresence mode="popLayout">
+              {visibleItems.map(item => {
+                const cost = item.dynamicPrice ? inventory.streakFreezeCost : item.basePrice;
+                const canAfford = gemBalance >= cost;
+                const isCosmetic = item.type === 'COSMETICS';
+                const isOwned = isCosmetic && inventory?.ownedThemes?.includes(item.themeName);
+                const isEquipped = isCosmetic && inventory?.currentTheme === item.themeName;
+                const isBoostActive = item.id === 'XP_BOOST' && inventory?.xpBoostActive;
+                const isFreezeMaxed = item.id === 'STREAK_FREEZE' && inventory?.streakFreezesOwned >= 5;
+
+                let displayTitle = item.title;
+                if (item.id === 'STREAK_FREEZE') {
+                  if (cost === 100) displayTitle = 'Streak Aegis';
+                  if (cost === 200) displayTitle = 'Streak Relic';
+                }
+
+                return (
+                  <motion.div 
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                    key={item.id + (item.themeName || '')} 
+                    className={`p-5 rounded-2xl border transition-all ${isBoostActive ? 'border-[var(--flow-green)] shadow-[0_0_15px_rgba(46,204,113,0.2)]' : 'border-[var(--border-subtle)]'} bg-[var(--surface-base)] relative overflow-hidden`}
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="text-4xl">{item.icon}</div>
+                      {!isOwned && !isBoostActive && !isFreezeMaxed && (
+                        <div className={`font-black text-lg ${canAfford ? 'text-[var(--xp-blue)]' : 'text-red-400 opacity-70'}`}>{cost} 💎</div>
+                      )}
+                    </div>
+                    
+                    <h3 className="text-xl font-bold text-white mb-1">{displayTitle}</h3>
+                    <p className="text-sm text-[var(--text-secondary)] mb-6 h-10">{item.description}</p>
+                    
+                    {item.id === 'STREAK_FREEZE' && (
+                      <div className="text-xs font-bold text-[var(--text-secondary)] mb-3 bg-[var(--surface-raised)] inline-block px-2 py-1 rounded-md">
+                        Owned: {inventory.streakFreezesOwned} / 5
+                      </div>
+                    )}
+
+                    {isEquipped ? (
+                      <button disabled className="w-full py-2.5 rounded-xl font-bold bg-white/10 text-white cursor-not-allowed">EQUIPPED</button>
+                    ) : isOwned ? (
+                      <button onClick={() => handleEquip(item.themeName)} disabled={isProcessing} className="w-full py-2.5 rounded-xl font-bold border border-[var(--xp-blue)] text-[var(--xp-blue)] hover:bg-[var(--xp-blue)] hover:text-white transition-colors">Equip Theme</button>
+                    ) : isBoostActive ? (
+                      <button disabled className="w-full py-2.5 rounded-xl font-bold bg-[var(--flow-green)] text-black animate-pulse">ACTIVE</button>
+                    ) : isFreezeMaxed ? (
+                      <button disabled className="w-full py-2.5 rounded-xl font-bold bg-white/10 text-[var(--text-secondary)] cursor-not-allowed">MAX OWNED</button>
+                    ) : canAfford ? (
+                      <button onClick={() => setConfirmItem(item)} className="w-full py-2.5 rounded-xl font-bold bg-[var(--surface-raised)] text-white border border-[var(--border-subtle)] hover:border-[var(--xp-blue)] hover:text-[var(--xp-blue)] transition-colors">Purchase</button>
+                    ) : (
+                      <button disabled className="w-full py-2.5 rounded-xl font-bold bg-red-900/20 text-red-400 cursor-not-allowed border border-red-900/50">Need {cost - gemBalance} more</button>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+
+          {/* CONFIRMATION MODAL */}
+          <AnimatePresence>
+            {confirmItem && (
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                  className="bg-[var(--surface-base)] border border-[var(--border-subtle)] p-6 rounded-2xl max-w-sm w-full shadow-2xl"
+                >
+                  <h2 className="text-2xl font-bold text-white mb-2">Confirm Purchase</h2>
+                  <p className="text-[var(--text-secondary)] mb-6">
+                    Buy <strong>{confirmItem.title}</strong> for <strong className="text-[var(--xp-blue)]">{confirmItem.dynamicPrice ? inventory.streakFreezeCost : confirmItem.basePrice} gems</strong>?
+                  </p>
+                  
+                  {errorMessage && <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 text-red-200 rounded-lg text-sm">{errorMessage}</div>}
+
+                  <div className="flex gap-3">
+                    <button onClick={() => { setConfirmItem(null); setErrorMessage(null); }} disabled={isProcessing} className="flex-1 py-2 rounded-xl font-bold text-[var(--text-secondary)] bg-[var(--surface-raised)] hover:text-white transition-colors">Cancel</button>
+                    <button onClick={handlePurchase} disabled={isProcessing} className="flex-1 py-2 rounded-xl font-bold text-black bg-[var(--flow-green)] hover:scale-105 active:scale-95 transition-transform">{isProcessing ? '⌛' : 'Confirm'}</button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

@@ -4,13 +4,13 @@ import { taskApi } from '../api/gameApi';
 import useGameStore from '../store/useGameStore';
 import TaskCard from '../components/tasks/TaskCard';
 import TaskModal from '../components/tasks/TaskModal';
+import { SkeletonTaskCard, SkeletonBox } from '../components/ui/Skeleton';
 
-// ✨ UPGRADED: Beautiful, animated custom dropdown component that matches the search bar
+// --- CUSTOM SELECT COMPONENT ---
 const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown if user clicks anywhere outside of it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -26,8 +26,6 @@ const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
   return (
     <div className="relative" ref={dropdownRef}>
       <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-sm z-10">{icon}</span>
-      
-      {/* ✨ FIXED: Uses font-normal and text-[var(--text-secondary)] to match the Search bar perfectly */}
       <div
         onClick={() => setIsOpen(!isOpen)}
         className="w-full pl-9 pr-8 py-2.5 bg-[var(--surface-raised)] border rounded-xl text-sm font-normal text-[var(--text-secondary)] hover:text-white cursor-pointer select-none transition-colors flex items-center min-h-[42px]"
@@ -42,22 +40,11 @@ const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
         className="absolute right-3 top-1/2 opacity-50 pointer-events-none transition-transform duration-200 flex items-center justify-center text-[var(--text-secondary)]" 
         style={{ transform: isOpen ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%) rotate(0deg)'}}
       >
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          width="14" 
-          height="14" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2.5" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </div>
 
-      {/* The animated popup menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -93,8 +80,13 @@ const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
   );
 };
 
+// --- MAIN PAGE COMPONENT ---
 const TasksPage = () => {
   const { tasks, setTasks, setError } = useGameStore();
+  
+  // ✨ NEW: Initial loading state for the skeleton
+  const [loading, setLoading] = useState(true);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
 
@@ -105,12 +97,12 @@ const TasksPage = () => {
   const [tagFilter, setTagFilter] = useState('ALL'); 
   const [availableTags, setAvailableTags] = useState([]);
 
-  // ✨ NEW: PAGINATION STATES ---
+  // --- PAGINATION STATES ---
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // ✨ FIXED: Dynamic Tag Extraction (Safely handles Objects!)
+  // Dynamic Tag Extraction
   useEffect(() => {
     const fetchActiveTags = async () => {
       try {
@@ -121,7 +113,6 @@ const TasksPage = () => {
         allTasksForStatus.forEach(task => {
           if (task.tags && Array.isArray(task.tags)) {
             task.tags.forEach(tag => {
-              // Extract the string name whether it's an object {name: 'cooking'} or already a string
               const tagName = typeof tag === 'object' ? tag.name : tag;
               if (tagName) uniqueTags.add(tagName);
             });
@@ -140,14 +131,14 @@ const TasksPage = () => {
     fetchActiveTags();
   }, [statusFilter]);
 
-  // ✨ UPGRADED: MAIN TASK FETCH WITH PAGINATION
+  // Main Task Fetch
   const fetchTasks = useCallback(async (pageNum = 0) => {
     try {
       if (pageNum > 0) setIsLoadingMore(true);
 
       const params = {
         page: pageNum,
-        size: 10 // Only grab 10 to keep the DB fast and UI snappy
+        size: 10
       };
       
       if (statusFilter !== 'ALL') params.status = statusFilter;
@@ -158,14 +149,12 @@ const TasksPage = () => {
       const response = await taskApi.getAll(params);
       const newTasks = response.data?.content || (Array.isArray(response.data) ? response.data : []);
       
-      // If we are on page 0 (new search/filter), replace list. Else, append to existing list!
       if (pageNum === 0) {
         setTasks(newTasks);
       } else {
         setTasks([...useGameStore.getState().tasks, ...newTasks]);
       }
 
-      // Read Spring Boot's pagination metadata to see if we reached the end
       setHasMore(response.data?.last === false);
       setPage(pageNum);
 
@@ -173,13 +162,14 @@ const TasksPage = () => {
       setError('Failed to load tasks.');
     } finally {
       setIsLoadingMore(false);
+      setLoading(false); // ✨ Turns off skeleton permanently after the first successful load
     }
   }, [statusFilter, priorityFilter, searchQuery, tagFilter, setTasks, setError]);
 
-  // --- DEBOUNCE ---
+  // Debounce fetch trigger
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchTasks(0); // ✨ Always reset to Page 0 when user types or changes a filter
+      fetchTasks(0);
     }, 300);
     return () => clearTimeout(delayDebounceFn);
   }, [fetchTasks]);
@@ -208,6 +198,38 @@ const TasksPage = () => {
     ...availableTags.map(tag => ({ label: tag, value: tag }))
   ];
 
+  // ✨ NEW: SKELETON LOADING STATE
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="max-w-4xl mx-auto py-6"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <SkeletonBox height="2.5rem" width="12rem" className="rounded-xl" />
+          <SkeletonBox height="2.5rem" width="8rem" className="rounded-xl" />
+        </div>
+        
+        {/* Filter bar skeleton */}
+        <div 
+          className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 p-4 rounded-2xl border"
+          style={{ backgroundColor: 'var(--surface-base)', borderColor: 'var(--border-subtle)' }}
+        >
+          {[1,2,3,4].map(i => (
+            <SkeletonBox key={i} height="2.5rem" className="rounded-xl" />
+          ))}
+        </div>
+        
+        {/* Task card skeletons */}
+        <div className="flex flex-col gap-3">
+          {[1,2,3].map(i => <SkeletonTaskCard key={i} />)}
+        </div>
+      </motion.div>
+    );
+  }
+
+  // --- MAIN RENDER ---
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -226,13 +248,10 @@ const TasksPage = () => {
         </button>
       </div>
 
-      {/* --- THE UPGRADED FILTER DASHBOARD --- */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 bg-[var(--surface-base)] p-4 rounded-2xl border border-[var(--border-subtle)] shadow-lg relative z-50">
         
-        {/* 1. Search Bar */}
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-sm">🔍</span>
-          {/* ✨ FIXED: Added font-normal and placeholder-[var(--text-secondary)] to perfectly match CustomSelect */}
           <input 
             type="text" 
             placeholder="Search titles..." 
@@ -242,7 +261,6 @@ const TasksPage = () => {
           />
         </div>
 
-        {/* 2. Tag Dropdown (Now Custom!) */}
         <CustomSelect 
           icon="🏷️"
           value={tagFilter}
@@ -251,7 +269,6 @@ const TasksPage = () => {
           placeholder="Filter by tag..."
         />
 
-        {/* 3. Priority Dropdown (Now Custom!) */}
         <CustomSelect 
           icon="⚔️"
           value={priorityFilter}
@@ -260,7 +277,6 @@ const TasksPage = () => {
           placeholder="All Threats"
         />
 
-        {/* 4. Status Dropdown (Now Custom!) */}
         <CustomSelect 
           icon="📜"
           value={statusFilter}
@@ -270,7 +286,6 @@ const TasksPage = () => {
         />
       </div>
 
-      {/* Task List Rendering */}
       {tasks.length === 0 ? (
         <motion.div 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -296,7 +311,6 @@ const TasksPage = () => {
             ))}
           </AnimatePresence>
 
-          {/* ✨ NEW: GAMIFIED LOAD MORE BUTTON */}
           {hasMore && (
             <motion.button
               initial={{ opacity: 0 }}
@@ -312,11 +326,10 @@ const TasksPage = () => {
         </motion.div>
       )}
 
-      {/* Modal */}
       <TaskModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={() => fetchTasks(0)} // ✨ Make sure it resets to Page 0 after editing!
+        onSuccess={() => fetchTasks(0)} 
         existingTask={taskToEdit}
       />
     </motion.div>
