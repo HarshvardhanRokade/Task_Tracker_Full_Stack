@@ -2,6 +2,8 @@ import React from 'react';
 import { Flame, Gem } from 'lucide-react';
 import useGameStore from '../../store/useGameStore';
 import XpBar from './XpBar';
+// ✨ NEW: Import the animation hook
+import useCountUp from '../../hooks/useCountUp'; 
 
 const PlayerCard = () => {
   const { 
@@ -12,8 +14,13 @@ const PlayerCard = () => {
     gemBalance, 
     dailyStreak,
     getLevelName,
-    xpBoostActive // ✨ 1. Pull the boost state from the store
+    xpBoostActive 
   } = useGameStore();
+
+  // ✨ NEW: Wrap our core numbers in the animation hook
+  const animatedXp = useCountUp(currentXp);
+  const animatedGems = useCountUp(gemBalance);
+  const animatedStreak = useCountUp(dailyStreak);
 
   return (
     <div className="p-4 rounded-xl mb-6 shadow-lg border" style={{ backgroundColor: 'var(--surface-base)', borderColor: 'var(--border-subtle)' }}>
@@ -27,20 +34,22 @@ const PlayerCard = () => {
         </div>
       </div>
 
-      <XpBar currentXp={currentXp} totalXpForNextLevel={xpToNextLevel} />
+      {/* ✨ UPDATED: Pass the animated value to the XP Bar */}
+      <XpBar currentXp={animatedXp} totalXpForNextLevel={xpToNextLevel} />
 
       <div className="flex justify-between mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
         <div className="flex items-center gap-1.5" title="Gem Balance">
           <Gem size={16} style={{ color: 'var(--gem-purple)' }} />
-          <span className="text-sm font-semibold">{gemBalance}</span>
+          {/* ✨ UPDATED: Animated Gems */}
+          <span className="text-sm font-semibold">{animatedGems}</span>
         </div>
         <div className="flex items-center gap-1.5" title="Daily Streak">
           <Flame size={16} style={{ color: dailyStreak > 0 ? 'var(--streak-orange)' : 'var(--text-secondary)' }} />
-          <span className="text-sm font-semibold">{dailyStreak}</span>
+          {/* ✨ UPDATED: Animated Streak */}
+          <span className="text-sm font-semibold">{animatedStreak}</span>
         </div>
       </div>
 
-      {/* ✨ 2. The Global Boost Indicator! */}
       {xpBoostActive && (
         <div 
           className="mt-3 pt-3 border-t flex items-center justify-center gap-2 text-xs font-bold"
