@@ -36,7 +36,6 @@ const StorePage = () => {
   const fetchInventory = async () => {
     setIsLoading(true);
     try {
-      // ✨ THE FIX: Added 400ms artificial delay to prevent skeleton flashing
       const [response] = await Promise.all([
         storeApi.getInventory(),
         new Promise(resolve => setTimeout(resolve, 400))
@@ -90,7 +89,6 @@ const StorePage = () => {
 
   const visibleItems = STORE_ITEMS.filter(item => item.type === activeTab);
 
-  // ✨ THE FIX: Wrapped the entire return in AnimatePresence with keys
   return (
     <AnimatePresence mode="wait">
       {isLoading ? (
@@ -101,7 +99,6 @@ const StorePage = () => {
           exit={{ opacity: 0, transition: { duration: 0.15 } }}
           className="max-w-4xl mx-auto py-8"
         >
-          {/* Header Skeleton */}
           <div className="flex justify-between items-end mb-8 bg-[var(--surface-raised)] p-6 rounded-2xl border border-[var(--border-subtle)] shadow-lg">
             <div>
               <SkeletonBox width="14rem" height="2.5rem" className="mb-2 rounded-lg" />
@@ -113,14 +110,13 @@ const StorePage = () => {
             </div>
           </div>
 
-          {/* Tabs Skeleton */}
           <div className="flex gap-4 mb-6 border-b border-[var(--border-subtle)] pb-2">
             {[1, 2, 3].map((i) => (
               <SkeletonBox key={i} width="7rem" height="2rem" className="rounded-lg" />
             ))}
           </div>
 
-          {/* Store Items Grid Skeleton */}
+          {/* ✨ Verified: grid-cols-1 md:grid-cols-2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="p-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-base)]">
@@ -146,7 +142,6 @@ const StorePage = () => {
           exit={{ opacity: 0, y: -10, transition: { duration: 0.15 } }}
           className="max-w-4xl mx-auto py-8"
         >
-          {/* HEADER */}
           <div className="flex justify-between items-end mb-8 bg-[var(--surface-raised)] p-6 rounded-2xl border border-[var(--border-subtle)] shadow-lg">
             <div>
               <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">The Tavern</h1>
@@ -158,7 +153,6 @@ const StorePage = () => {
             </div>
           </div>
 
-          {/* TABS */}
           <div className="flex gap-4 mb-6 border-b border-[var(--border-subtle)] pb-2">
             {TABS.map(tab => (
               <button
@@ -172,7 +166,7 @@ const StorePage = () => {
             ))}
           </div>
 
-          {/* ITEM GRID */}
+          {/* ✨ Verified: grid-cols-1 md:grid-cols-2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <AnimatePresence mode="popLayout">
               {visibleItems.map(item => {
@@ -232,7 +226,6 @@ const StorePage = () => {
             </AnimatePresence>
           </div>
 
-          {/* CONFIRMATION MODAL */}
           <AnimatePresence>
             {confirmItem && (
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">

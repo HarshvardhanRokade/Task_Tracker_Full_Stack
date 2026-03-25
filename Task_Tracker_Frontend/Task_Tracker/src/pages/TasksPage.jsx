@@ -6,7 +6,6 @@ import TaskCard from '../components/tasks/TaskCard';
 import TaskModal from '../components/tasks/TaskModal';
 import { SkeletonTaskCard, SkeletonBox } from '../components/ui/Skeleton';
 
-// --- CUSTOM SELECT COMPONENT ---
 const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -80,7 +79,6 @@ const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
   );
 };
 
-// --- MAIN PAGE COMPONENT ---
 const TasksPage = () => {
   const { tasks, setTasks, setError } = useGameStore();
   
@@ -88,19 +86,16 @@ const TasksPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
 
-  // --- FILTER STATES ---
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('OPEN');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [tagFilter, setTagFilter] = useState('ALL'); 
   const [availableTags, setAvailableTags] = useState([]);
 
-  // --- PAGINATION STATES ---
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // Dynamic Tag Extraction
   useEffect(() => {
     const fetchActiveTags = async () => {
       try {
@@ -129,7 +124,6 @@ const TasksPage = () => {
     fetchActiveTags();
   }, [statusFilter]);
 
-  // Main Task Fetch
   const fetchTasks = useCallback(async (pageNum = 0) => {
     try {
       if (pageNum > 0) setIsLoadingMore(true);
@@ -164,7 +158,6 @@ const TasksPage = () => {
     }
   }, [statusFilter, priorityFilter, searchQuery, tagFilter, setTasks, setError]);
 
-  // Debounce fetch trigger
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchTasks(0);
@@ -177,7 +170,6 @@ const TasksPage = () => {
     setIsModalOpen(true);
   };
 
-  // --- DROPDOWN OPTIONS DATA ---
   const priorityOptions = [
     { label: 'All Threats', value: 'ALL' },
     { label: 'High Threat', value: 'HIGH' },
@@ -208,7 +200,7 @@ const TasksPage = () => {
           <SkeletonBox height="2.5rem" width="8rem" className="rounded-xl" />
         </div>
         
-        {/* Filter bar skeleton */}
+        {/* ✨ Verified: grid-cols-1 md:grid-cols-4 */}
         <div 
           className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 p-4 rounded-2xl border"
           style={{ backgroundColor: 'var(--surface-base)', borderColor: 'var(--border-subtle)' }}
@@ -218,7 +210,6 @@ const TasksPage = () => {
           ))}
         </div>
         
-        {/* Task card skeletons */}
         <div className="flex flex-col gap-3">
           {[1,2,3].map(i => <SkeletonTaskCard key={i} />)}
         </div>
@@ -226,7 +217,6 @@ const TasksPage = () => {
     );
   }
 
-  // --- MAIN RENDER ---
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -245,6 +235,7 @@ const TasksPage = () => {
         </button>
       </div>
 
+      {/* ✨ Verified: grid-cols-1 md:grid-cols-4 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 bg-[var(--surface-base)] p-4 rounded-2xl border border-[var(--border-subtle)] shadow-lg relative z-50">
         
         <div className="relative">
@@ -284,7 +275,6 @@ const TasksPage = () => {
       </div>
 
       {tasks.length === 0 ? (
-        // ✨ UPDATED: EMPTY STATES WITH PERSONALITY
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -359,7 +349,6 @@ const TasksPage = () => {
               {isLoadingMore ? '⏳ Searching Archives...' : '📜 Reveal More Quests'}
             </motion.button>
           )}
-
         </motion.div>
       )}
 

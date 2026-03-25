@@ -6,7 +6,6 @@ import {
 } from 'recharts'
 import { analyticsApi } from '../api/gameApi'
 
-// ✨ NEW: Import Skeleton & ErrorBoundary
 import { SkeletonBox, SkeletonStatCard } from '../components/ui/Skeleton'
 import ErrorBoundary from '../components/ui/ErrorBoundary'
 
@@ -38,12 +37,9 @@ const MOTIVATIONAL_MESSAGES = [
 const getMotivationalMessage = (streak) =>
     MOTIVATIONAL_MESSAGES.find(m => streak >= m.min && streak <= m.max)?.msg || ''
 
-// ✨ NEW: Date Formatter Helper
 const formatChartDate = (dateStr) => {
     if (!dateStr) return ''
-    // Try to safely parse the date string
     const date = new Date(dateStr)
-    // Fallback if the date is invalid (e.g., 'ALL_TIME' labels)
     if (isNaN(date)) return dateStr 
     return date.toLocaleDateString('en-US', {
         month: 'short',
@@ -130,6 +126,7 @@ const DashboardPage = () => {
                         <SkeletonBox height="1rem" width="6rem" className="rounded-md" />
                     </div>
                 </div>
+                {/* Responsive Grid 1 */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
                     {[1, 2, 3, 4].map(i => <SkeletonStatCard key={i} />)}
                 </div>
@@ -140,6 +137,7 @@ const DashboardPage = () => {
                 <SkeletonBox height="2.5rem" width="14rem" className="rounded-xl" />
             </div>
 
+            {/* Responsive Grid 2 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <SkeletonBox height="18rem" className="rounded-2xl" />
                 <SkeletonBox height="18rem" className="rounded-2xl" />
@@ -191,6 +189,7 @@ const DashboardPage = () => {
                     </div>
                 </div>
 
+                {/* Responsive Grid 3 */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
                     <StatCard label="Tasks Done"
                               value={summary.totalTasksCompleted}
@@ -246,10 +245,12 @@ const DashboardPage = () => {
                         exit={{ opacity: 0, transition: { duration: 0.15 } }}
                         className="space-y-6"
                     >
+                        {/* Responsive Grid 4 */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <SkeletonBox height="18rem" className="rounded-2xl" />
                             <SkeletonBox height="18rem" className="rounded-2xl" />
                         </div>
+                        {/* Responsive Grid 5 */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="md:col-span-2">
                                 <SkeletonBox height="16rem" className="rounded-2xl" />
@@ -269,6 +270,7 @@ const DashboardPage = () => {
                         className="space-y-8"
                     >
                         {/* ── TASK PERFORMANCE ── */}
+                        {/* Responsive Grid 6 */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <ErrorBoundary>
                                 <div className="p-5 rounded-2xl border"
@@ -278,14 +280,13 @@ const DashboardPage = () => {
                                     {taskData?.dailyCompletions?.length > 0 ? (
                                         <ResponsiveContainer width="100%" height={200}>
                                             <BarChart data={taskData.dailyCompletions}>
-                                                {/* ✨ ADDED: tickFormatter */}
                                                 <XAxis dataKey="date"
                                                        tickFormatter={formatChartDate}
                                                        tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                                                 <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
                                                        allowDecimals={false} />
                                                 <Tooltip
-                                                    labelFormatter={formatChartDate} // ✨ ADDED: Makes the tooltip show formatted date too!
+                                                    labelFormatter={formatChartDate} 
                                                     contentStyle={{
                                                         backgroundColor: 'var(--surface-raised)',
                                                         border: '1px solid var(--border-subtle)',
@@ -394,6 +395,7 @@ const DashboardPage = () => {
                         </ErrorBoundary>
 
                         {/* ── FOCUS PERFORMANCE ── */}
+                        {/* Responsive Grid 7 */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <ErrorBoundary>
                                 <div className="md:col-span-2 p-5 rounded-2xl border h-full"
@@ -403,14 +405,13 @@ const DashboardPage = () => {
                                     {pomodoroData?.dailySessions?.length > 0 ? (
                                         <ResponsiveContainer width="100%" height={200}>
                                             <BarChart data={pomodoroData.dailySessions}>
-                                                {/* ✨ ADDED: tickFormatter */}
                                                 <XAxis dataKey="date"
                                                        tickFormatter={formatChartDate}
                                                        tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                                                 <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
                                                        allowDecimals={false} />
                                                 <Tooltip
-                                                    labelFormatter={formatChartDate} // ✨ ADDED: Makes the tooltip show formatted date too!
+                                                    labelFormatter={formatChartDate}
                                                     contentStyle={{
                                                         backgroundColor: 'var(--surface-raised)',
                                                         border: '1px solid var(--border-subtle)',
@@ -456,13 +457,12 @@ const DashboardPage = () => {
                                 {xpChartData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height={220}>
                                         <LineChart data={xpChartData}>
-                                            {/* ✨ ADDED: tickFormatter for label */}
                                             <XAxis dataKey="label"
                                                    tickFormatter={formatChartDate}
                                                    tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                                             <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                                             <Tooltip
-                                                labelFormatter={formatChartDate} // ✨ ADDED: Makes the tooltip show formatted date too!
+                                                labelFormatter={formatChartDate} 
                                                 contentStyle={{
                                                     backgroundColor: 'var(--surface-raised)',
                                                     border: '1px solid var(--border-subtle)',

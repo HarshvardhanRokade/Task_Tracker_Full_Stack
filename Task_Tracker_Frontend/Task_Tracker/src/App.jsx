@@ -18,15 +18,14 @@ import DashboardPage from './pages/DashboardPage'
 import StorePage from './pages/StorePage'
 
 const AppLayout = ({ children }) => (
-    // ✨ Perfectly fills the locked #root container
-    <div className="w-full h-full flex overflow-hidden"
+    <div className="fixed inset-0 flex w-full h-full overflow-hidden"
          style={{ backgroundColor: 'var(--bg-dark)' }}>
-        
+         
         <Sidebar />
         
-        {/* ✨ Only this specific section is allowed to scroll */}
-        <main className="flex-1 h-full p-8 overflow-y-auto overflow-x-hidden">
-            <div className="pb-12">
+        {/* ✨ Added universal padding-top (pt-20) to clear the hamburger button! */}
+        <main className="flex-1 h-full p-4 pt-20 md:p-8 md:pt-20 overflow-y-auto overflow-x-hidden">
+            <div className="max-w-5xl mx-auto pb-12">
                 {children}
             </div>
         </main>
