@@ -79,13 +79,13 @@ const RegisterPage = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4"
+        <div className="h-full w-full flex overflow-y-auto p-4"
              style={{ backgroundColor: 'var(--bg-dark)' }}>
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md"
+                className="w-full max-w-md m-auto pb-8"
             >
                 {/* Header */}
                 <div className="text-center mb-8">

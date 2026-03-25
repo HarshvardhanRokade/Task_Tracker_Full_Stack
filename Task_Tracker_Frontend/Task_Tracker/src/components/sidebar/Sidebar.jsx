@@ -1,9 +1,8 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import PlayerCard from './PlayerCard'; // ✨ Use the real component
+import { NavLink, useNavigate } from 'react-router-dom';
+import PlayerCard from './PlayerCard';
 import { authApi } from '../../api/gameApi';
 import useGameStore from '../../store/useGameStore'
-import { useNavigate } from 'react-router-dom'
 
 const Sidebar = () => {
   const navItems = [
@@ -29,18 +28,17 @@ const Sidebar = () => {
 
   return (
     <aside
-      className="w-80 h-screen p-6 flex flex-col border-r"
+      // ✨ Locked to exactly 100% height, won't shrink
+      className="w-80 flex-shrink-0 h-full p-6 flex flex-col border-r overflow-hidden"
       style={{
         backgroundColor: 'var(--surface-base)',
         borderColor: 'var(--border-subtle)'
       }}
     >
-      {/* 1. Dynamic Player Info */}
       <div className="mb-8">
         <PlayerCard />
       </div>
 
-      {/* 2. Navigation Links */}
       <nav className="flex-1 flex flex-col gap-2">
         {navItems.map((item) => (
           <NavLink
@@ -58,6 +56,7 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
+      
       <button
         onClick={handleLogout}
         className="w-full flex items-center gap-3 px-4 py-2 rounded-lg
