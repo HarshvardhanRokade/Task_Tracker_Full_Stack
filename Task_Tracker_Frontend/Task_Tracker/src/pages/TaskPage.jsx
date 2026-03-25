@@ -84,9 +84,7 @@ const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
 const TasksPage = () => {
   const { tasks, setTasks, setError } = useGameStore();
   
-  // ✨ NEW: Initial loading state for the skeleton
   const [loading, setLoading] = useState(true);
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
 
@@ -162,7 +160,7 @@ const TasksPage = () => {
       setError('Failed to load tasks.');
     } finally {
       setIsLoadingMore(false);
-      setLoading(false); // ✨ Turns off skeleton permanently after the first successful load
+      setLoading(false);
     }
   }, [statusFilter, priorityFilter, searchQuery, tagFilter, setTasks, setError]);
 
@@ -198,7 +196,6 @@ const TasksPage = () => {
     ...availableTags.map(tag => ({ label: tag, value: tag }))
   ];
 
-  // ✨ NEW: SKELETON LOADING STATE
   if (loading) {
     return (
       <motion.div
@@ -287,17 +284,57 @@ const TasksPage = () => {
       </div>
 
       {tasks.length === 0 ? (
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-          className="text-center py-16 bg-[var(--surface-base)] border border-dashed rounded-2xl border-[var(--border-subtle)] text-[var(--text-secondary)] relative z-0"
+        // ✨ UPDATED: EMPTY STATES WITH PERSONALITY
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16 rounded-2xl border border-dashed relative z-0"
+          style={{ backgroundColor: 'var(--surface-base)', borderColor: 'var(--border-subtle)' }}
         >
-          <div className="text-4xl mb-3 opacity-50">🏕️</div>
-          <div className="font-bold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>
-            {searchQuery || priorityFilter !== 'ALL' || tagFilter !== 'ALL' || statusFilter !== 'OPEN' 
-              ? "No quests match your current filters." 
-              : "No active quests. The realm is at peace."}
-          </div>
-          <p className="text-sm opacity-70">Enjoy your rest, or forge a new quest to earn XP.</p>
+          {searchQuery || priorityFilter !== 'ALL' || tagFilter !== 'ALL' || statusFilter !== 'OPEN' ? (
+            <>
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="font-bold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>
+                No quests match your filters
+              </p>
+              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                Try adjusting your search or filters
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setPriorityFilter('ALL');
+                  setTagFilter('ALL');
+                  setStatusFilter('OPEN');
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-bold"
+                style={{
+                  backgroundColor: 'var(--surface-raised)',
+                  color: 'var(--xp-blue)',
+                  border: '1px solid var(--xp-blue)',
+                }}
+              >
+                Clear Filters
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="text-5xl mb-4">⚔️</div>
+              <p className="font-bold text-xl mb-2" style={{ color: 'var(--text-primary)' }}>
+                No active quests
+              </p>
+              <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+                Create your first quest to start earning XP and building your streak
+              </p>
+              <button
+                onClick={() => handleOpenModal(null)}
+                className="px-6 py-3 rounded-xl font-bold text-black transition-transform hover:scale-105 shadow-[0_0_15px_rgba(46,204,113,0.3)]"
+                style={{ backgroundColor: 'var(--flow-green)' }}
+              >
+                + Forge Your First Quest
+              </button>
+            </>
+          )}
         </motion.div>
       ) : (
         <motion.div layout className="flex flex-col gap-3 relative z-0">

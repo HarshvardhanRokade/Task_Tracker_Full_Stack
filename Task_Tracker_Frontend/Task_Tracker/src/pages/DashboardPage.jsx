@@ -6,8 +6,9 @@ import {
 } from 'recharts'
 import { analyticsApi } from '../api/gameApi'
 
-// ✨ NEW: Import Skeleton components
+// ✨ NEW: Import Skeleton & ErrorBoundary
 import { SkeletonBox, SkeletonStatCard } from '../components/ui/Skeleton'
+import ErrorBoundary from '../components/ui/ErrorBoundary'
 
 // --- CONSTANTS ---
 const PERIODS = [
@@ -36,6 +37,19 @@ const MOTIVATIONAL_MESSAGES = [
 
 const getMotivationalMessage = (streak) =>
     MOTIVATIONAL_MESSAGES.find(m => streak >= m.min && streak <= m.max)?.msg || ''
+
+// ✨ NEW: Date Formatter Helper
+const formatChartDate = (dateStr) => {
+    if (!dateStr) return ''
+    // Try to safely parse the date string
+    const date = new Date(dateStr)
+    // Fallback if the date is invalid (e.g., 'ALL_TIME' labels)
+    if (isNaN(date)) return dateStr 
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+    })
+}
 
 // --- SMALL REUSABLE COMPONENTS ---
 const StatCard = ({ label, value, icon, color }) => (
@@ -75,14 +89,12 @@ const DashboardPage = () => {
     const [loading, setLoading]         = useState(true)
     const [error, setError]             = useState(null)
 
-    // Fetch summary once on mount — never changes with period
     useEffect(() => {
         analyticsApi.getSummary()
             .then(res => setSummary(res.data))
             .catch(() => setError('Failed to load summary.'))
     }, [])
 
-    // Fetch period-dependent data whenever period changes
     const fetchPeriodData = useCallback(async () => {
         setLoading(true)
         try {
@@ -90,7 +102,7 @@ const DashboardPage = () => {
                 analyticsApi.getTasks(period),
                 analyticsApi.getPomodoro(period),
                 analyticsApi.getProgression(period),
-                new Promise(resolve => setTimeout(resolve, 400)) // ✨ Forced delay
+                new Promise(resolve => setTimeout(resolve, 400))
             ])
             setTaskData(tasks.data)
             setPomodoroData(pomodoro.data)
@@ -104,7 +116,6 @@ const DashboardPage = () => {
 
     useEffect(() => { fetchPeriodData() }, [fetchPeriodData])
 
-    // ✨ FULL PAGE SKELETON (Initial Mount)
     if (!summary) return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-5xl mx-auto py-8 space-y-8">
             <div className="p-6 rounded-2xl border" style={{ backgroundColor: 'var(--surface-raised)', borderColor: 'var(--border-subtle)' }}>
@@ -226,7 +237,6 @@ const DashboardPage = () => {
                 </div>
             </div>
 
-            {/* ✨ THE FIX: Crossfade animation wrapper */}
             <AnimatePresence mode="wait">
                 {loading ? (
                     <motion.div 
@@ -260,229 +270,242 @@ const DashboardPage = () => {
                     >
                         {/* ── TASK PERFORMANCE ── */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="p-5 rounded-2xl border"
-                                 style={{ backgroundColor: 'var(--surface-base)',
-                                          borderColor: 'var(--border-subtle)' }}>
-                                <SectionTitle>Tasks Completed</SectionTitle>
-                                {taskData?.dailyCompletions?.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <BarChart data={taskData.dailyCompletions}>
-                                            <XAxis dataKey="date"
-                                                   tick={{ fill: 'var(--text-secondary)',
-                                                           fontSize: 11 }} />
-                                            <YAxis tick={{ fill: 'var(--text-secondary)',
-                                                           fontSize: 11 }}
-                                                   allowDecimals={false} />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    backgroundColor: 'var(--surface-raised)',
-                                                    border: '1px solid var(--border-subtle)',
-                                                    borderRadius: '8px',
-                                                    color: 'var(--text-primary)'
-                                                }} />
-                                            <Bar dataKey="count"
-                                                 fill="var(--xp-blue)"
-                                                 radius={[4,4,0,0]}
-                                                 name="Tasks" />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                ) : (
-                                    <EmptyState message="No completed tasks in this period." />
-                                )}
-                            </div>
-
-                            <div className="p-5 rounded-2xl border flex flex-col h-full"
-                                 style={{ backgroundColor: 'var(--surface-base)',
-                                          borderColor: 'var(--border-subtle)' }}>
-                                <SectionTitle>By Priority</SectionTitle>
-                                {priorityChartData.some(d => d.value > 0) ? (
-                                    <div className="flex-1 flex items-center justify-center min-h-[200px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={priorityChartData}
-                                                    innerRadius={60}
-                                                    outerRadius={80}
-                                                    paddingAngle={5}
-                                                    dataKey="value"
-                                                    nameKey="name"
-                                                    stroke="none">
-                                                    {priorityChartData.map(entry => (
-                                                        <Cell
-                                                            key={entry.name}
-                                                            fill={PRIORITY_COLORS[entry.name]} />
-                                                    ))}
-                                                </Pie>
+                            <ErrorBoundary>
+                                <div className="p-5 rounded-2xl border"
+                                     style={{ backgroundColor: 'var(--surface-base)',
+                                              borderColor: 'var(--border-subtle)' }}>
+                                    <SectionTitle>Tasks Completed</SectionTitle>
+                                    {taskData?.dailyCompletions?.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={200}>
+                                            <BarChart data={taskData.dailyCompletions}>
+                                                {/* ✨ ADDED: tickFormatter */}
+                                                <XAxis dataKey="date"
+                                                       tickFormatter={formatChartDate}
+                                                       tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+                                                <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                                                       allowDecimals={false} />
                                                 <Tooltip
+                                                    labelFormatter={formatChartDate} // ✨ ADDED: Makes the tooltip show formatted date too!
                                                     contentStyle={{
                                                         backgroundColor: 'var(--surface-raised)',
                                                         border: '1px solid var(--border-subtle)',
                                                         borderRadius: '8px',
                                                         color: 'var(--text-primary)'
                                                     }} />
-                                                <Legend
-                                                    verticalAlign="bottom"
-                                                    height={36}
-                                                    formatter={(value) => (
-                                                        <span style={{ color: 'var(--text-secondary)',
-                                                                       fontSize: 12,
-                                                                       fontWeight: 'bold' }}>
-                                                            {value}
-                                                        </span>
-                                                    )} />
-                                            </PieChart>
+                                                <Bar dataKey="count"
+                                                     fill="var(--xp-blue)"
+                                                     radius={[4,4,0,0]}
+                                                     name="Tasks" />
+                                            </BarChart>
                                         </ResponsiveContainer>
-                                    </div>
-                                ) : (
-                                    <EmptyState message="No task data for this period." />
-                                )}
-                            </div>
+                                    ) : (
+                                        <EmptyState message="No completed tasks in this period." />
+                                    )}
+                                </div>
+                            </ErrorBoundary>
+
+                            <ErrorBoundary>
+                                <div className="p-5 rounded-2xl border flex flex-col h-full"
+                                     style={{ backgroundColor: 'var(--surface-base)',
+                                              borderColor: 'var(--border-subtle)' }}>
+                                    <SectionTitle>By Priority</SectionTitle>
+                                    {priorityChartData.some(d => d.value > 0) ? (
+                                        <div className="flex-1 flex items-center justify-center min-h-[200px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={priorityChartData}
+                                                        innerRadius={60}
+                                                        outerRadius={80}
+                                                        paddingAngle={5}
+                                                        dataKey="value"
+                                                        nameKey="name"
+                                                        stroke="none">
+                                                        {priorityChartData.map(entry => (
+                                                            <Cell
+                                                                key={entry.name}
+                                                                fill={PRIORITY_COLORS[entry.name]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip
+                                                        contentStyle={{
+                                                            backgroundColor: 'var(--surface-raised)',
+                                                            border: '1px solid var(--border-subtle)',
+                                                            borderRadius: '8px',
+                                                            color: 'var(--text-primary)'
+                                                        }} />
+                                                    <Legend
+                                                        verticalAlign="bottom"
+                                                        height={36}
+                                                        formatter={(value) => (
+                                                            <span style={{ color: 'var(--text-secondary)', fontSize: 12, fontWeight: 'bold' }}>
+                                                                {value}
+                                                            </span>
+                                                        )} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    ) : (
+                                        <EmptyState message="No task data for this period." />
+                                    )}
+                                </div>
+                            </ErrorBoundary>
                         </div>
 
                         {/* ── TOP TAGS ── */}
-                        <div className="p-5 rounded-2xl border"
-                             style={{ backgroundColor: 'var(--surface-base)',
-                                      borderColor: 'var(--border-subtle)' }}>
-                            <SectionTitle>Top Tags</SectionTitle>
-                            {taskData?.topTags?.length > 0 ? (
-                                <div className="space-y-3">
-                                    {taskData.topTags.map((tag, i) => {
-                                        const maxCount = taskData.topTags[0].count
-                                        const pct = (tag.count / maxCount) * 100
-                                        return (
-                                            <div key={tag.tagName}
-                                                 className="flex items-center gap-3">
-                                                <div className="w-24 text-sm font-bold text-right"
-                                                     style={{ color: 'var(--text-secondary)' }}>
-                                                    {tag.tagName}
+                        <ErrorBoundary>
+                            <div className="p-5 rounded-2xl border"
+                                 style={{ backgroundColor: 'var(--surface-base)',
+                                          borderColor: 'var(--border-subtle)' }}>
+                                <SectionTitle>Top Tags</SectionTitle>
+                                {taskData?.topTags?.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {taskData.topTags.map((tag, i) => {
+                                            const maxCount = taskData.topTags[0].count
+                                            const pct = (tag.count / maxCount) * 100
+                                            return (
+                                                <div key={tag.tagName}
+                                                     className="flex items-center gap-3">
+                                                    <div className="w-24 text-sm font-bold text-right"
+                                                         style={{ color: 'var(--text-secondary)' }}>
+                                                        {tag.tagName}
+                                                    </div>
+                                                    <div className="flex-1 h-6 rounded-full overflow-hidden"
+                                                         style={{ backgroundColor: 'var(--surface-raised)' }}>
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${pct}%` }}
+                                                            transition={{ duration: 0.6, delay: i * 0.1 }}
+                                                            className="h-full rounded-full"
+                                                            style={{ backgroundColor: 'var(--xp-blue)' }} />
+                                                    </div>
+                                                    <div className="w-8 text-sm font-bold"
+                                                         style={{ color: 'var(--text-primary)' }}>
+                                                        {tag.count}
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1 h-6 rounded-full overflow-hidden"
-                                                     style={{ backgroundColor: 'var(--surface-raised)' }}>
-                                                    <motion.div
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${pct}%` }}
-                                                        transition={{ duration: 0.6, delay: i * 0.1 }}
-                                                        className="h-full rounded-full"
-                                                        style={{ backgroundColor: 'var(--xp-blue)' }} />
-                                                </div>
-                                                <div className="w-8 text-sm font-bold"
-                                                     style={{ color: 'var(--text-primary)' }}>
-                                                    {tag.count}
-                                                </div>
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            ) : (
-                                <EmptyState message="No tagged tasks completed in this period." />
-                            )}
-                        </div>
+                                            )
+                                        })}
+                                    </div>
+                                ) : (
+                                    <EmptyState message="No tagged tasks completed in this period." />
+                                )}
+                            </div>
+                        </ErrorBoundary>
 
                         {/* ── FOCUS PERFORMANCE ── */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="md:col-span-2 p-5 rounded-2xl border"
+                            <ErrorBoundary>
+                                <div className="md:col-span-2 p-5 rounded-2xl border h-full"
+                                     style={{ backgroundColor: 'var(--surface-base)',
+                                              borderColor: 'var(--border-subtle)' }}>
+                                    <SectionTitle>Focus Sessions</SectionTitle>
+                                    {pomodoroData?.dailySessions?.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={200}>
+                                            <BarChart data={pomodoroData.dailySessions}>
+                                                {/* ✨ ADDED: tickFormatter */}
+                                                <XAxis dataKey="date"
+                                                       tickFormatter={formatChartDate}
+                                                       tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+                                                <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
+                                                       allowDecimals={false} />
+                                                <Tooltip
+                                                    labelFormatter={formatChartDate} // ✨ ADDED: Makes the tooltip show formatted date too!
+                                                    contentStyle={{
+                                                        backgroundColor: 'var(--surface-raised)',
+                                                        border: '1px solid var(--border-subtle)',
+                                                        borderRadius: '8px',
+                                                        color: 'var(--text-primary)'
+                                                    }} />
+                                                <Bar dataKey="count"
+                                                     fill="var(--flow-green)"
+                                                     radius={[4,4,0,0]}
+                                                     name="Sessions" />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <EmptyState message="No focus sessions in this period." />
+                                    )}
+                                </div>
+                            </ErrorBoundary>
+
+                            <ErrorBoundary>
+                                <div className="flex flex-col gap-3">
+                                    <StatCard label="Best Flow Streak"
+                                              value={`${pomodoroData?.bestFlowStreak || 0}🔗`}
+                                              icon="⚡"
+                                              color="var(--flow-green)" />
+                                    <StatCard label="Avg Multiplier"
+                                              value={`${pomodoroData?.averageMultiplier || 1.0}x`}
+                                              icon="✨"
+                                              color="var(--level-gold)" />
+                                    <StatCard label="Pomodoro XP"
+                                              value={(pomodoroData?.totalXpFromPomodoros || 0).toLocaleString()}
+                                              icon="🍅"
+                                              color="var(--xp-blue)" />
+                                </div>
+                            </ErrorBoundary>
+                        </div>
+
+                        {/* ── PROGRESSION TIMELINE ── */}
+                        <ErrorBoundary>
+                            <div className="p-5 rounded-2xl border"
                                  style={{ backgroundColor: 'var(--surface-base)',
                                           borderColor: 'var(--border-subtle)' }}>
-                                <SectionTitle>Focus Sessions</SectionTitle>
-                                {pomodoroData?.dailySessions?.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <BarChart data={pomodoroData.dailySessions}>
-                                            <XAxis dataKey="date"
-                                                   tick={{ fill: 'var(--text-secondary)',
-                                                           fontSize: 11 }} />
-                                            <YAxis tick={{ fill: 'var(--text-secondary)',
-                                                           fontSize: 11 }}
-                                                   allowDecimals={false} />
+                                <SectionTitle>XP Progression</SectionTitle>
+                                {xpChartData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height={220}>
+                                        <LineChart data={xpChartData}>
+                                            {/* ✨ ADDED: tickFormatter for label */}
+                                            <XAxis dataKey="label"
+                                                   tickFormatter={formatChartDate}
+                                                   tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+                                            <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                                             <Tooltip
+                                                labelFormatter={formatChartDate} // ✨ ADDED: Makes the tooltip show formatted date too!
                                                 contentStyle={{
                                                     backgroundColor: 'var(--surface-raised)',
                                                     border: '1px solid var(--border-subtle)',
                                                     borderRadius: '8px',
                                                     color: 'var(--text-primary)'
                                                 }} />
-                                            <Bar dataKey="count"
-                                                 fill="var(--flow-green)"
-                                                 radius={[4,4,0,0]}
-                                                 name="Sessions" />
-                                        </BarChart>
+                                            <Line
+                                                type="monotone"
+                                                dataKey="xp"
+                                                stroke="var(--level-gold)"
+                                                strokeWidth={2}
+                                                dot={{ fill: 'var(--level-gold)', r: 4 }}
+                                                name="XP Earned" />
+                                        </LineChart>
                                     </ResponsiveContainer>
                                 ) : (
-                                    <EmptyState message="No focus sessions in this period." />
+                                    <EmptyState message="Complete quests or sessions to see XP progression." />
+                                )}
+
+                                {progression?.levelUps?.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t"
+                                         style={{ borderColor: 'var(--border-subtle)' }}>
+                                        <div className="text-xs font-bold uppercase mb-2"
+                                             style={{ color: 'var(--text-secondary)' }}>
+                                            Level Ups in This Period
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {progression.levelUps.map((lu, i) => (
+                                                <div key={i}
+                                                     className="px-3 py-1 rounded-full text-xs font-bold"
+                                                     style={{
+                                                         backgroundColor: 'rgba(241,196,15,0.15)',
+                                                         color: 'var(--level-gold)',
+                                                         border: '1px solid var(--level-gold)'
+                                                     }}>
+                                                    ⚡ Level {lu.level} — {lu.triggeredBy}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-
-                            <div className="flex flex-col gap-3">
-                                <StatCard label="Best Flow Streak"
-                                          value={`${pomodoroData?.bestFlowStreak || 0}🔗`}
-                                          icon="⚡"
-                                          color="var(--flow-green)" />
-                                <StatCard label="Avg Multiplier"
-                                          value={`${pomodoroData?.averageMultiplier || 1.0}x`}
-                                          icon="✨"
-                                          color="var(--level-gold)" />
-                                <StatCard label="Pomodoro XP"
-                                          value={(pomodoroData?.totalXpFromPomodoros || 0).toLocaleString()}
-                                          icon="🍅"
-                                          color="var(--xp-blue)" />
-                            </div>
-                        </div>
-
-                        {/* ── PROGRESSION TIMELINE ── */}
-                        <div className="p-5 rounded-2xl border"
-                             style={{ backgroundColor: 'var(--surface-base)',
-                                      borderColor: 'var(--border-subtle)' }}>
-                            <SectionTitle>XP Progression</SectionTitle>
-                            {xpChartData.length > 0 ? (
-                                <ResponsiveContainer width="100%" height={220}>
-                                    <LineChart data={xpChartData}>
-                                        <XAxis dataKey="label"
-                                               tick={{ fill: 'var(--text-secondary)',
-                                                       fontSize: 11 }} />
-                                        <YAxis tick={{ fill: 'var(--text-secondary)',
-                                                       fontSize: 11 }} />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: 'var(--surface-raised)',
-                                                border: '1px solid var(--border-subtle)',
-                                                borderRadius: '8px',
-                                                color: 'var(--text-primary)'
-                                            }} />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="xp"
-                                            stroke="var(--level-gold)"
-                                            strokeWidth={2}
-                                            dot={{ fill: 'var(--level-gold)', r: 4 }}
-                                            name="XP Earned" />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <EmptyState message="Complete quests or sessions to see XP progression." />
-                            )}
-
-                            {progression?.levelUps?.length > 0 && (
-                                <div className="mt-4 pt-4 border-t"
-                                     style={{ borderColor: 'var(--border-subtle)' }}>
-                                    <div className="text-xs font-bold uppercase mb-2"
-                                         style={{ color: 'var(--text-secondary)' }}>
-                                        Level Ups in This Period
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {progression.levelUps.map((lu, i) => (
-                                            <div key={i}
-                                                 className="px-3 py-1 rounded-full text-xs font-bold"
-                                                 style={{
-                                                     backgroundColor: 'rgba(241,196,15,0.15)',
-                                                     color: 'var(--level-gold)',
-                                                     border: '1px solid var(--level-gold)'
-                                                 }}>
-                                                ⚡ Level {lu.level} — {lu.triggeredBy}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                        </ErrorBoundary>
                     </motion.div>
                 )}
             </AnimatePresence>

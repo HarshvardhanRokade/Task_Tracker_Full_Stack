@@ -14,28 +14,44 @@ const RegisterPage = () => {
         password: '',
         confirmPassword: '',
     })
+    
+    // ✨ NEW: Field-level error state
+    const [fieldErrors, setFieldErrors] = useState({})
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(false)
 
+    // ✨ NEW: Validation logic
+    const validate = () => {
+        const errors = {}
+        if (form.username.length < 3)
+            errors.username = 'Username must be at least 3 characters'
+        if (!form.email.includes('@'))
+            errors.email = 'Enter a valid email address'
+        if (form.password.length < 8)
+            errors.password = 'Password must be at least 8 characters'
+        if (form.password !== form.confirmPassword)
+            errors.confirmPassword = 'Passwords do not match'
+        return errors
+    }
+
     const handleChange = (e) => {
         setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+        // ✨ UPGRADED: Clear specific field error as user types
+        setFieldErrors(prev => ({ ...prev, [e.target.name]: null }))
         setError(null)
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        
+        // ✨ UPGRADED: Run inline validation before submitting
+        const errors = validate()
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors)
+            return
+        }
+
         setError(null)
-
-        // Client-side validation
-        if (form.password !== form.confirmPassword) {
-            setError('Passwords do not match.')
-            return
-        }
-        if (form.password.length < 8) {
-            setError('Password must be at least 8 characters.')
-            return
-        }
-
         setLoading(true)
 
         try {
@@ -111,14 +127,20 @@ const RegisterPage = () => {
                                 required
                                 minLength={3}
                                 maxLength={50}
-                                className="w-full px-4 py-3 rounded-xl text-sm
-                                           focus:outline-none"
-                                style={inputStyle}
-                                onFocus={e =>
-                                    e.target.style.borderColor = 'var(--xp-blue)'}
-                                onBlur={e =>
-                                    e.target.style.borderColor = 'var(--border-subtle)'}
+                                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-colors"
+                                style={{
+                                    ...inputStyle,
+                                    borderColor: fieldErrors.username ? 'var(--danger-red)' : 'var(--border-subtle)'
+                                }}
+                                onFocus={e => !fieldErrors.username && (e.target.style.borderColor = 'var(--xp-blue)')}
+                                onBlur={e => !fieldErrors.username && (e.target.style.borderColor = 'var(--border-subtle)')}
                             />
+                            {/* ✨ NEW: Inline Error Display */}
+                            {fieldErrors.username && (
+                                <p className="text-xs mt-1 font-bold" style={{ color: 'var(--danger-red)' }}>
+                                    {fieldErrors.username}
+                                </p>
+                            )}
                         </div>
 
                         {/* Email */}
@@ -134,14 +156,20 @@ const RegisterPage = () => {
                                 onChange={handleChange}
                                 placeholder="Enter your email"
                                 required
-                                className="w-full px-4 py-3 rounded-xl text-sm
-                                           focus:outline-none"
-                                style={inputStyle}
-                                onFocus={e =>
-                                    e.target.style.borderColor = 'var(--xp-blue)'}
-                                onBlur={e =>
-                                    e.target.style.borderColor = 'var(--border-subtle)'}
+                                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-colors"
+                                style={{
+                                    ...inputStyle,
+                                    borderColor: fieldErrors.email ? 'var(--danger-red)' : 'var(--border-subtle)'
+                                }}
+                                onFocus={e => !fieldErrors.email && (e.target.style.borderColor = 'var(--xp-blue)')}
+                                onBlur={e => !fieldErrors.email && (e.target.style.borderColor = 'var(--border-subtle)')}
                             />
+                            {/* ✨ NEW: Inline Error Display */}
+                            {fieldErrors.email && (
+                                <p className="text-xs mt-1 font-bold" style={{ color: 'var(--danger-red)' }}>
+                                    {fieldErrors.email}
+                                </p>
+                            )}
                         </div>
 
                         {/* Password */}
@@ -158,14 +186,20 @@ const RegisterPage = () => {
                                 placeholder="Minimum 8 characters"
                                 required
                                 minLength={8}
-                                className="w-full px-4 py-3 rounded-xl text-sm
-                                           focus:outline-none"
-                                style={inputStyle}
-                                onFocus={e =>
-                                    e.target.style.borderColor = 'var(--xp-blue)'}
-                                onBlur={e =>
-                                    e.target.style.borderColor = 'var(--border-subtle)'}
+                                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-colors"
+                                style={{
+                                    ...inputStyle,
+                                    borderColor: fieldErrors.password ? 'var(--danger-red)' : 'var(--border-subtle)'
+                                }}
+                                onFocus={e => !fieldErrors.password && (e.target.style.borderColor = 'var(--xp-blue)')}
+                                onBlur={e => !fieldErrors.password && (e.target.style.borderColor = 'var(--border-subtle)')}
                             />
+                            {/* ✨ NEW: Inline Error Display */}
+                            {fieldErrors.password && (
+                                <p className="text-xs mt-1 font-bold" style={{ color: 'var(--danger-red)' }}>
+                                    {fieldErrors.password}
+                                </p>
+                            )}
                         </div>
 
                         {/* Confirm Password */}
@@ -181,22 +215,28 @@ const RegisterPage = () => {
                                 onChange={handleChange}
                                 placeholder="Repeat your password"
                                 required
-                                className="w-full px-4 py-3 rounded-xl text-sm
-                                           focus:outline-none"
-                                style={inputStyle}
-                                onFocus={e =>
-                                    e.target.style.borderColor = 'var(--xp-blue)'}
-                                onBlur={e =>
-                                    e.target.style.borderColor = 'var(--border-subtle)'}
+                                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-colors"
+                                style={{
+                                    ...inputStyle,
+                                    borderColor: fieldErrors.confirmPassword ? 'var(--danger-red)' : 'var(--border-subtle)'
+                                }}
+                                onFocus={e => !fieldErrors.confirmPassword && (e.target.style.borderColor = 'var(--xp-blue)')}
+                                onBlur={e => !fieldErrors.confirmPassword && (e.target.style.borderColor = 'var(--border-subtle)')}
                             />
+                            {/* ✨ NEW: Inline Error Display */}
+                            {fieldErrors.confirmPassword && (
+                                <p className="text-xs mt-1 font-bold" style={{ color: 'var(--danger-red)' }}>
+                                    {fieldErrors.confirmPassword}
+                                </p>
+                            )}
                         </div>
 
-                        {/* Error */}
+                        {/* Global API Error */}
                         {error && (
                             <motion.div
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="p-3 rounded-xl text-sm"
+                                className="p-3 rounded-xl text-sm mt-4"
                                 style={{
                                     backgroundColor: 'rgba(231,76,60,0.15)',
                                     border: '1px solid var(--danger-red)',
@@ -213,7 +253,7 @@ const RegisterPage = () => {
                             className="w-full py-3 rounded-xl font-bold text-sm
                                        transition-transform hover:scale-105
                                        active:scale-95 disabled:opacity-50
-                                       disabled:cursor-not-allowed mt-2"
+                                       disabled:cursor-not-allowed mt-4"
                             style={{
                                 backgroundColor: 'var(--flow-green)',
                                 color: '#000',

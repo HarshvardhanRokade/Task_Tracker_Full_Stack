@@ -2,9 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PomodoroTimer from '../components/pomodoro/PomodoroTimer';
 import { SkeletonBox } from '../components/ui/Skeleton';
+// ✨ NEW: Import the store to read current flow streak and session status
+import useGameStore from '../store/useGameStore';
 
 const FocusPage = () => {
   const [isLoading, setIsLoading] = useState(true);
+  // Pull variables from the Zustand store
+  const { pomodoroFlowStreak, sessionActive } = useGameStore();
 
   // Artificial delay to match the loading feel of the rest of the app 
   // and prevent harsh layout shifts while the PomodoroTimer mounts
@@ -55,6 +59,22 @@ const FocusPage = () => {
 
       {/* The Gamified Timer Engine */}
       <PomodoroTimer />
+
+      {/* ✨ NEW: Empty State / Motivational nudge if they haven't started a session yet */}
+      {pomodoroFlowStreak === 0 && !sessionActive && (
+          <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-6 p-4 rounded-xl text-center text-sm max-w-md mx-auto"
+              style={{
+                  backgroundColor: 'var(--surface-base)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+              }}>
+              🎯 Complete your first session to start building
+              your Flow Streak and earn bonus XP multipliers
+          </motion.div>
+      )}
 
       {/* Rules Legend (Perfectly synced with Spring Boot PomodoroServiceImpl) */}
       <div 

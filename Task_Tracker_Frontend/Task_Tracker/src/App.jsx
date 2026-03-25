@@ -8,6 +8,7 @@ import Sidebar from './components/sidebar/Sidebar'
 import RewardOverlay from './components/rewards/RewardOverlay'
 import ErrorToast from './components/rewards/ErrorToast'
 import ProtectedRoute from './components/ProtectedRoute'
+import ErrorBoundary from './components/ui/ErrorBoundary' // ✨ NEW IMPORT
 
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -82,28 +83,43 @@ function App() {
                 <Route path="/tasks" element={
                     <ProtectedRoute>
                         <AppLayout>
-                            <TasksPage />
+                            {/* ✨ NEW: Wrapped in ErrorBoundary */}
+                            <ErrorBoundary>
+                                <TasksPage />
+                            </ErrorBoundary>
                         </AppLayout>
                     </ProtectedRoute>
                 } />
+                
                 <Route path="/focus" element={
                     <ProtectedRoute>
                         <AppLayout>
-                            <FocusPage />
+                            {/* ✨ NEW: Wrapped in ErrorBoundary */}
+                            <ErrorBoundary>
+                                <FocusPage />
+                            </ErrorBoundary>
                         </AppLayout>
                     </ProtectedRoute>
                 } />
+                
                 <Route path="/dashboard" element={
                     <ProtectedRoute>
                         <AppLayout>
-                            <DashboardPage />
+                            {/* ✨ NEW: Wrapped in ErrorBoundary */}
+                            <ErrorBoundary>
+                                <DashboardPage />
+                            </ErrorBoundary>
                         </AppLayout>
                     </ProtectedRoute>
                 } />
+                
                 <Route path="/store" element={
                     <ProtectedRoute>
                         <AppLayout>
-                            <StorePage />
+                            {/* ✨ NEW: Wrapped in ErrorBoundary */}
+                            <ErrorBoundary>
+                                <StorePage />
+                            </ErrorBoundary>
                         </AppLayout>
                     </ProtectedRoute>
                 } />
