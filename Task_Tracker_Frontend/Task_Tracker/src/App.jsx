@@ -8,11 +8,12 @@ import Sidebar from './components/sidebar/Sidebar'
 import RewardOverlay from './components/rewards/RewardOverlay'
 import ErrorToast from './components/rewards/ErrorToast'
 import ProtectedRoute from './components/ProtectedRoute'
-import ErrorBoundary from './components/ui/ErrorBoundary' // ✨ NEW IMPORT
+import ErrorBoundary from './components/ui/ErrorBoundary'
 
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
-import TasksPage from './pages/TaskPage'
+// ✨ FIXED: Added the missing 's' to TasksPage
+import TasksPage from './pages/TasksPage' 
 import FocusPage from './pages/FocusPage'
 import DashboardPage from './pages/DashboardPage'
 import StorePage from './pages/StorePage'
@@ -35,18 +36,17 @@ function App() {
     const [initializing, setInitializing] = useState(true)
 
     useEffect(() => {
-        // On mount — attempt silent refresh to restore session
+        // On mount — ALWAYS attempt silent refresh to restore session AND user data
         const attemptSilentRefresh = async () => {
-            if (isAuthenticated) {
-                // Already have a token — skip refresh
-                setInitializing(false)
-                return
-            }
+            
+            // ❌ WE DELETED THE "if (isAuthenticated) { return }" BLOCK HERE ❌
 
             try {
                 // Try to refresh using httpOnly cookie
                 const response = await authApi.refresh()
-                setAuth(response.data)
+                
+                // ✨ This is what actually fills in "grinder_user", Level 50, etc.
+                setAuth(response.data) 
             } catch {
                 // No valid refresh token — user must log in
                 clearAuth()
@@ -56,9 +56,8 @@ function App() {
         }
 
         attemptSilentRefresh()
-    }, [])
+    }, []) // Make sure this dependency array stays empty!
 
-    // Show nothing while checking auth status
     if (initializing) {
         return (
             <div className="min-h-screen flex items-center justify-center"
@@ -83,7 +82,6 @@ function App() {
                 <Route path="/tasks" element={
                     <ProtectedRoute>
                         <AppLayout>
-                            {/* ✨ NEW: Wrapped in ErrorBoundary */}
                             <ErrorBoundary>
                                 <TasksPage />
                             </ErrorBoundary>
@@ -94,7 +92,6 @@ function App() {
                 <Route path="/focus" element={
                     <ProtectedRoute>
                         <AppLayout>
-                            {/* ✨ NEW: Wrapped in ErrorBoundary */}
                             <ErrorBoundary>
                                 <FocusPage />
                             </ErrorBoundary>
@@ -105,7 +102,6 @@ function App() {
                 <Route path="/dashboard" element={
                     <ProtectedRoute>
                         <AppLayout>
-                            {/* ✨ NEW: Wrapped in ErrorBoundary */}
                             <ErrorBoundary>
                                 <DashboardPage />
                             </ErrorBoundary>
@@ -116,7 +112,6 @@ function App() {
                 <Route path="/store" element={
                     <ProtectedRoute>
                         <AppLayout>
-                            {/* ✨ NEW: Wrapped in ErrorBoundary */}
                             <ErrorBoundary>
                                 <StorePage />
                             </ErrorBoundary>
