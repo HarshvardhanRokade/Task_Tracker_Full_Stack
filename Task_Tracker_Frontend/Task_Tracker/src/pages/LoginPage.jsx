@@ -61,18 +61,17 @@ const LoginPage = () => {
                     </p>
                 </div>
 
-                {/* Card */}
-                <div className="p-8 rounded-2xl border"
+                {/* ✨ STANDARDIZED: Tightened padding to p-6 to match Dashboard hero cards */}
+                <div className="p-6 rounded-2xl border shadow-xl"
                      style={{ backgroundColor: 'var(--surface-base)',
                               borderColor: 'var(--border-subtle)' }}>
 
-                    <h2 className="text-xl font-bold mb-6"
+                    <h2 className="text-xl font-bold mb-6 text-center"
                         style={{ color: 'var(--text-primary)' }}>
                         Welcome Back
                     </h2>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-
                         {/* Username or Email */}
                         <div>
                             <label className="block text-sm font-bold mb-1.5"
@@ -86,17 +85,14 @@ const LoginPage = () => {
                                 onChange={handleChange}
                                 placeholder="Enter username or email"
                                 required
-                                className="w-full px-4 py-3 rounded-xl text-sm
-                                           focus:outline-none transition-colors"
+                                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-colors"
                                 style={{
                                     backgroundColor: 'var(--surface-raised)',
                                     border: '1px solid var(--border-subtle)',
                                     color: 'var(--text-primary)',
                                 }}
-                                onFocus={e =>
-                                    e.target.style.borderColor = 'var(--xp-blue)'}
-                                onBlur={e =>
-                                    e.target.style.borderColor = 'var(--border-subtle)'}
+                                onFocus={e => e.target.style.borderColor = 'var(--xp-blue)'}
+                                onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
                             />
                         </div>
 
@@ -113,17 +109,14 @@ const LoginPage = () => {
                                 onChange={handleChange}
                                 placeholder="Enter password"
                                 required
-                                className="w-full px-4 py-3 rounded-xl text-sm
-                                           focus:outline-none transition-colors"
+                                className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-colors"
                                 style={{
                                     backgroundColor: 'var(--surface-raised)',
                                     border: '1px solid var(--border-subtle)',
                                     color: 'var(--text-primary)',
                                 }}
-                                onFocus={e =>
-                                    e.target.style.borderColor = 'var(--xp-blue)'}
-                                onBlur={e =>
-                                    e.target.style.borderColor = 'var(--border-subtle)'}
+                                onFocus={e => e.target.style.borderColor = 'var(--xp-blue)'}
+                                onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
                             />
                         </div>
 
@@ -132,7 +125,7 @@ const LoginPage = () => {
                             <motion.div
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="p-3 rounded-xl text-sm"
+                                className="p-3 rounded-xl text-sm text-center font-bold"
                                 style={{
                                     backgroundColor: 'rgba(231,76,60,0.15)',
                                     border: '1px solid var(--danger-red)',
@@ -149,7 +142,7 @@ const LoginPage = () => {
                             className="w-full py-3 rounded-xl font-bold text-sm
                                        transition-transform hover:scale-105
                                        active:scale-95 disabled:opacity-50
-                                       disabled:cursor-not-allowed mt-2"
+                                       disabled:cursor-not-allowed mt-2 shadow-lg"
                             style={{
                                 backgroundColor: 'var(--xp-blue)',
                                 color: '#fff',
@@ -164,7 +157,7 @@ const LoginPage = () => {
                         No account?{' '}
                         <Link to="/register"
                               style={{ color: 'var(--xp-blue)' }}
-                              className="font-bold hover:underline">
+                              className="font-bold hover:underline transition-colors hover:brightness-125">
                             Create one
                         </Link>
                     </p>

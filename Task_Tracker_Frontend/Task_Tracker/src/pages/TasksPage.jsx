@@ -6,6 +6,7 @@ import TaskCard from '../components/tasks/TaskCard';
 import TaskModal from '../components/tasks/TaskModal';
 import { SkeletonTaskCard, SkeletonBox } from '../components/ui/Skeleton';
 
+// --- CUSTOM SELECT COMPONENT ---
 const CustomSelect = ({ value, onChange, options, icon, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -200,9 +201,8 @@ const TasksPage = () => {
           <SkeletonBox height="2.5rem" width="8rem" className="rounded-xl" />
         </div>
         
-        {/* ✨ Verified: grid-cols-1 md:grid-cols-4 */}
         <div 
-          className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 p-4 rounded-2xl border"
+          className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 p-5 rounded-2xl border"
           style={{ backgroundColor: 'var(--surface-base)', borderColor: 'var(--border-subtle)' }}
         >
           {[1,2,3,4].map(i => (
@@ -226,7 +226,7 @@ const TasksPage = () => {
       className="max-w-4xl mx-auto py-6" 
     >
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Active Quests</h2>
+        <h2 className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>Active Quests</h2>
         <button
           onClick={() => handleOpenModal(null)}
           className="px-5 py-2.5 bg-[var(--flow-green)] rounded-xl font-bold text-black transition-transform hover:scale-105 active:scale-95 shadow-[0_0_15px_rgba(46,204,113,0.3)]"
@@ -235,8 +235,7 @@ const TasksPage = () => {
         </button>
       </div>
 
-      {/* ✨ Verified: grid-cols-1 md:grid-cols-4 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 bg-[var(--surface-base)] p-4 rounded-2xl border border-[var(--border-subtle)] shadow-lg relative z-50">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8 bg-[var(--surface-base)] p-5 rounded-2xl border border-[var(--border-subtle)] shadow-lg relative z-50">
         
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50 text-sm">🔍</span>
@@ -290,6 +289,7 @@ const TasksPage = () => {
               <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                 Try adjusting your search or filters
               </p>
+              {/* ✨ STANDARDIZED: Clear Filters Button Comment Moved */}
               <button
                 onClick={() => {
                   setSearchQuery('');
@@ -297,7 +297,7 @@ const TasksPage = () => {
                   setTagFilter('ALL');
                   setStatusFilter('OPEN');
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-bold"
+                className="px-4 py-2 rounded-xl text-sm font-bold"
                 style={{
                   backgroundColor: 'var(--surface-raised)',
                   color: 'var(--xp-blue)',

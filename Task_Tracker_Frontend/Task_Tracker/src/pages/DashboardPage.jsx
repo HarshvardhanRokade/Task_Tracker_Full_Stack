@@ -8,11 +8,8 @@ import { analyticsApi } from '../api/gameApi'
 
 import { SkeletonBox, SkeletonStatCard } from '../components/ui/Skeleton'
 import ErrorBoundary from '../components/ui/ErrorBoundary'
-
-// ✨ NEW: Import the animation hook
 import useCountUp from '../hooks/useCountUp'
 
-// --- CONSTANTS ---
 const PERIODS = [
     { label: '7D',  value: 'WEEK' },
     { label: '30D', value: 'MONTH' },
@@ -50,7 +47,6 @@ const formatChartDate = (dateStr) => {
     })
 }
 
-// --- SMALL REUSABLE COMPONENTS ---
 const StatCard = ({ label, value, icon, color }) => (
     <div className="p-4 rounded-xl border flex flex-col gap-1"
          style={{ backgroundColor: 'var(--surface-base)', borderColor: 'var(--border-subtle)' }}>
@@ -78,7 +74,6 @@ const EmptyState = ({ message }) => (
     </div>
 )
 
-// --- MAIN COMPONENT ---
 const DashboardPage = () => {
     const [period, setPeriod]           = useState('WEEK')
     const [summary, setSummary]         = useState(null)
@@ -115,7 +110,6 @@ const DashboardPage = () => {
 
     useEffect(() => { fetchPeriodData() }, [fetchPeriodData])
 
-    // ✨ NEW: Animate Dashboard Summary Numbers
     const animatedTasks      = useCountUp(summary?.totalTasksCompleted || 0)
     const animatedSessions   = useCountUp(summary?.totalPomodoroSessions || 0)
     const animatedStreak     = useCountUp(summary?.currentDailyStreak || 0)
@@ -124,6 +118,11 @@ const DashboardPage = () => {
 
     if (!summary) return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-5xl mx-auto py-8 space-y-8">
+            {/* Added Skeleton Page Title */}
+            <div className="mb-2">
+                <SkeletonBox height="2.5rem" width="14rem" className="rounded-lg" />
+            </div>
+
             <div className="p-6 rounded-2xl border" style={{ backgroundColor: 'var(--surface-raised)', borderColor: 'var(--border-subtle)' }}>
                 <div className="flex items-center gap-4 mb-4">
                     <SkeletonBox height="4rem" width="4rem" className="rounded-full" />
@@ -142,7 +141,7 @@ const DashboardPage = () => {
             </div>
 
             <div className="flex items-center justify-between">
-                <SkeletonBox height="2.5rem" width="18rem" className="rounded-lg" />
+                <SkeletonBox height="2rem" width="18rem" className="rounded-lg" />
                 <SkeletonBox height="2.5rem" width="14rem" className="rounded-xl" />
             </div>
 
@@ -165,6 +164,13 @@ const DashboardPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-5xl mx-auto py-8 space-y-8"
         >
+            {/* ✨ STANDARDIZED: Added missing Page Title */}
+            <div className="flex justify-between items-center mb-2">
+                <h1 className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>
+                    Dashboard
+                </h1>
+            </div>
+
             {/* ── HERO CARD ── */}
             <div className="p-6 rounded-2xl border"
                  style={{ backgroundColor: 'var(--surface-raised)',
@@ -189,7 +195,6 @@ const DashboardPage = () => {
                     <div className="ml-auto text-right">
                         <div className="text-3xl font-black"
                              style={{ color: 'var(--xp-blue)' }}>
-                            {/* ✨ UPDATED: Animated Hero XP */}
                             {animatedXp.toLocaleString()} XP
                         </div>
                         <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
@@ -199,7 +204,6 @@ const DashboardPage = () => {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                    {/* ✨ UPDATED: Stat Cards now use animated variables */}
                     <StatCard label="Tasks Done"
                               value={animatedTasks}
                               icon="✅"
@@ -220,11 +224,12 @@ const DashboardPage = () => {
             </div>
 
             {/* ── PERIOD SELECTOR ── */}
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold"
+            <div className="flex items-center justify-between mt-8">
+                {/* ✨ STANDARDIZED: Downgraded to Section Title (text-xl) */}
+                <h2 className="text-xl font-bold"
                     style={{ color: 'var(--text-primary)' }}>
                     Performance Analytics
-                </h1>
+                </h2>
                 <div className="flex gap-1 p-1 rounded-xl border"
                      style={{ backgroundColor: 'var(--surface-base)',
                               borderColor: 'var(--border-subtle)' }}>

@@ -15,12 +15,10 @@ const RegisterPage = () => {
         confirmPassword: '',
     })
     
-    // ✨ NEW: Field-level error state
     const [fieldErrors, setFieldErrors] = useState({})
     const [error, setError] = useState(null)
     const [loading, setLoading] = useState(false)
 
-    // ✨ NEW: Validation logic
     const validate = () => {
         const errors = {}
         if (form.username.length < 3)
@@ -36,7 +34,6 @@ const RegisterPage = () => {
 
     const handleChange = (e) => {
         setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
-        // ✨ UPGRADED: Clear specific field error as user types
         setFieldErrors(prev => ({ ...prev, [e.target.name]: null }))
         setError(null)
     }
@@ -44,7 +41,6 @@ const RegisterPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault()
         
-        // ✨ UPGRADED: Run inline validation before submitting
         const errors = validate()
         if (Object.keys(errors).length > 0) {
             setFieldErrors(errors)
@@ -79,13 +75,13 @@ const RegisterPage = () => {
     }
 
     return (
-        <div className="h-full w-full flex overflow-y-auto p-4"
+        <div className="h-full w-full min-h-screen flex items-center justify-center overflow-y-auto p-4"
              style={{ backgroundColor: 'var(--bg-dark)' }}>
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md m-auto pb-8"
+                className="w-full max-w-md m-auto pb-8 pt-8"
             >
                 {/* Header */}
                 <div className="text-center mb-8">
@@ -100,18 +96,17 @@ const RegisterPage = () => {
                     </p>
                 </div>
 
-                {/* Card */}
-                <div className="p-8 rounded-2xl border"
+                {/* ✨ STANDARDIZED: Tightened padding to p-6 */}
+                <div className="p-6 rounded-2xl border shadow-xl"
                      style={{ backgroundColor: 'var(--surface-base)',
                               borderColor: 'var(--border-subtle)' }}>
 
-                    <h2 className="text-xl font-bold mb-6"
+                    <h2 className="text-xl font-bold mb-6 text-center"
                         style={{ color: 'var(--text-primary)' }}>
                         Create Account
                     </h2>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-
                         {/* Username */}
                         <div>
                             <label className="block text-sm font-bold mb-1.5"
@@ -135,9 +130,8 @@ const RegisterPage = () => {
                                 onFocus={e => !fieldErrors.username && (e.target.style.borderColor = 'var(--xp-blue)')}
                                 onBlur={e => !fieldErrors.username && (e.target.style.borderColor = 'var(--border-subtle)')}
                             />
-                            {/* ✨ NEW: Inline Error Display */}
                             {fieldErrors.username && (
-                                <p className="text-xs mt-1 font-bold" style={{ color: 'var(--danger-red)' }}>
+                                <p className="text-xs mt-1.5 font-bold" style={{ color: 'var(--danger-red)' }}>
                                     {fieldErrors.username}
                                 </p>
                             )}
@@ -164,9 +158,8 @@ const RegisterPage = () => {
                                 onFocus={e => !fieldErrors.email && (e.target.style.borderColor = 'var(--xp-blue)')}
                                 onBlur={e => !fieldErrors.email && (e.target.style.borderColor = 'var(--border-subtle)')}
                             />
-                            {/* ✨ NEW: Inline Error Display */}
                             {fieldErrors.email && (
-                                <p className="text-xs mt-1 font-bold" style={{ color: 'var(--danger-red)' }}>
+                                <p className="text-xs mt-1.5 font-bold" style={{ color: 'var(--danger-red)' }}>
                                     {fieldErrors.email}
                                 </p>
                             )}
@@ -194,9 +187,8 @@ const RegisterPage = () => {
                                 onFocus={e => !fieldErrors.password && (e.target.style.borderColor = 'var(--xp-blue)')}
                                 onBlur={e => !fieldErrors.password && (e.target.style.borderColor = 'var(--border-subtle)')}
                             />
-                            {/* ✨ NEW: Inline Error Display */}
                             {fieldErrors.password && (
-                                <p className="text-xs mt-1 font-bold" style={{ color: 'var(--danger-red)' }}>
+                                <p className="text-xs mt-1.5 font-bold" style={{ color: 'var(--danger-red)' }}>
                                     {fieldErrors.password}
                                 </p>
                             )}
@@ -223,9 +215,8 @@ const RegisterPage = () => {
                                 onFocus={e => !fieldErrors.confirmPassword && (e.target.style.borderColor = 'var(--xp-blue)')}
                                 onBlur={e => !fieldErrors.confirmPassword && (e.target.style.borderColor = 'var(--border-subtle)')}
                             />
-                            {/* ✨ NEW: Inline Error Display */}
                             {fieldErrors.confirmPassword && (
-                                <p className="text-xs mt-1 font-bold" style={{ color: 'var(--danger-red)' }}>
+                                <p className="text-xs mt-1.5 font-bold" style={{ color: 'var(--danger-red)' }}>
                                     {fieldErrors.confirmPassword}
                                 </p>
                             )}
@@ -236,7 +227,7 @@ const RegisterPage = () => {
                             <motion.div
                                 initial={{ opacity: 0, y: -5 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="p-3 rounded-xl text-sm mt-4"
+                                className="p-3 rounded-xl text-sm mt-4 text-center font-bold"
                                 style={{
                                     backgroundColor: 'rgba(231,76,60,0.15)',
                                     border: '1px solid var(--danger-red)',
@@ -253,7 +244,7 @@ const RegisterPage = () => {
                             className="w-full py-3 rounded-xl font-bold text-sm
                                        transition-transform hover:scale-105
                                        active:scale-95 disabled:opacity-50
-                                       disabled:cursor-not-allowed mt-4"
+                                       disabled:cursor-not-allowed mt-6 shadow-[0_0_15px_rgba(46,204,113,0.3)]"
                             style={{
                                 backgroundColor: 'var(--flow-green)',
                                 color: '#000',
@@ -268,7 +259,7 @@ const RegisterPage = () => {
                         Already have an account?{' '}
                         <Link to="/login"
                               style={{ color: 'var(--xp-blue)' }}
-                              className="font-bold hover:underline">
+                              className="font-bold hover:underline transition-colors hover:brightness-125">
                             Sign in
                         </Link>
                     </p>

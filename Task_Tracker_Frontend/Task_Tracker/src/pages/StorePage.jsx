@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { storeApi } from '../api/gameApi';
 import useGameStore from '../store/useGameStore';
 import { SkeletonBox } from '../components/ui/Skeleton';
-// ✨ NEW: Import sounds
 import useGameSounds from '../hooks/useGameSounds';
 
 const STORE_ITEMS = [
@@ -26,7 +25,6 @@ const TABS = ['PROTECTION', 'BOOSTS', 'COSMETICS'];
 
 const StorePage = () => {
   const { gemBalance, updateGemBalance, setXpBoostActive, setCurrentTheme } = useGameStore();
-  // ✨ NEW: Init sounds
   const { playPurchase } = useGameSounds();
   
   const [inventory, setInventory] = useState(null);
@@ -65,7 +63,7 @@ const StorePage = () => {
       const payload = { itemId: confirmItem.id, expectedCost, themeName: confirmItem.themeName };
       const response = await storeApi.purchaseItem(payload);
       
-      playPurchase(); // ✨ Play on successful purchase
+      playPurchase();
 
       updateGemBalance(response.data.newGemBalance);
       if (response.data.boostActivated) setXpBoostActive(true);
@@ -107,7 +105,8 @@ const StorePage = () => {
         >
           <div className="flex justify-between items-end mb-8 bg-[var(--surface-raised)] p-6 rounded-2xl border border-[var(--border-subtle)] shadow-lg">
             <div>
-              <SkeletonBox width="14rem" height="2.5rem" className="mb-2 rounded-lg" />
+              {/* ✨ STANDARDIZED: Adjusted height to match new text-3xl font size */}
+              <SkeletonBox width="14rem" height="2.25rem" className="mb-2 rounded-lg" />
               <SkeletonBox width="18rem" height="1.2rem" className="rounded-md" />
             </div>
             <div className="flex flex-col items-end">
@@ -149,7 +148,8 @@ const StorePage = () => {
         >
           <div className="flex justify-between items-end mb-8 bg-[var(--surface-raised)] p-6 rounded-2xl border border-[var(--border-subtle)] shadow-lg">
             <div>
-              <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">The Tavern</h1>
+              {/* ✨ STANDARDIZED: text-3xl font-black */}
+              <h1 className="text-3xl font-black text-[var(--text-primary)] mb-2">The Tavern</h1>
               <p className="text-[var(--text-secondary)]">Spend your hard-earned gems wisely.</p>
             </div>
             <div className="text-right">
