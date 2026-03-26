@@ -71,3 +71,13 @@ export const SkeletonStatCard = () => (
         <SkeletonBox height="0.75rem" width="80%" />
     </div>
 )
+
+// ✨ Added for Achievement Grid
+export const SkeletonBadge = () => (
+    <div className="p-3 rounded-xl text-center border flex flex-col items-center"
+        style={{ backgroundColor: 'var(--surface-raised)', borderColor: 'var(--border-subtle)' }}>
+        <SkeletonBox height="2.5rem" width="2.5rem" className="mb-2 rounded-full" />
+        <SkeletonBox height="0.7rem" width="60%" className="mb-1" />
+        <SkeletonBox height="0.5rem" width="40%" />
+    </div>
+)

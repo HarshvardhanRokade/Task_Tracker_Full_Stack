@@ -1,5 +1,6 @@
 package com.harsh.task.service.impl;
 
+import com.harsh.task.domain.dto.BadgeAwardDto;
 import com.harsh.task.domain.dto.PomodoroRewardDto;
 import com.harsh.task.entity.LevelUp;
 import com.harsh.task.entity.PomodoroSession;
@@ -10,6 +11,10 @@ import com.harsh.task.repository.LevelUpRepository;
 import com.harsh.task.repository.PomodoroSessionRepository;
 import com.harsh.task.repository.UserRepository;
 import com.harsh.task.service.PomodoroService;
+import com.harsh.task.badge.BadgeService;
+import com.harsh.task.badge.BadgeContext;
+import com.harsh.task.badge.BadgeEvent;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -29,6 +36,7 @@ public class PomodoroServiceImpl implements PomodoroService {
     private final FlowEngine flowEngine;
     private final PomodoroSessionRepository pomodoroSessionRepository;
     private final LevelUpRepository levelUpRepository;
+    private final BadgeService badgeService;
 
     private static final int POMODORO_BASE_XP = 100;
     private static final int POMODORO_BASE_GEMS = 5;
@@ -120,7 +128,6 @@ public class PomodoroServiceImpl implements PomodoroService {
             user.setXpBoostActive(false);
         }
 
-        // ✨ Capture original level BEFORE engine calculation
         int levelBeforeXp = user.getLevel();
 
         XpResult xpResult = xpEngine.calculate(
@@ -134,14 +141,46 @@ public class PomodoroServiceImpl implements PomodoroService {
         // Save User Data
         applyResultsToUser(user, flowResult, streakResult, xpResult, finalGemsEarned, now);
 
-        // ✨ Save Pomodoro Session History
+        // Save History
         recordSession(user, xpResult, calculatedGems,
                 flowResult.getMultiplierApplied(),
                 flowResult.getNewFlowStreak(),
                 false, boostConsumed, now);
 
-        // ✨ Save Level-Up History (passing levelBeforeXp)
         recordLevelUpsIfOccurred(user, xpResult, levelBeforeXp, "POMODORO", now);
+
+        // ✨ NEW: Badge Evaluation Logic
+        long totalPomodoros = pomodoroSessionRepository.countByUserId(userId);
+
+        BadgeContext badgeContext = BadgeContext.builder()
+                .user(user)
+                .event(BadgeEvent.POMODORO_COMPLETED)
+                .totalPomodoros(totalPomodoros)
+                .newLevel(xpResult.getNewLevel())
+                .currentStreak(streakResult.getNewCurrentDailyStreak())
+                .build();
+
+        List<BadgeAwardDto> newBadges = badgeService.checkAndAward(badgeContext);
+
+        // Check level badges if leveled up
+        if (xpResult.isDidLevelUp()) {
+            BadgeContext levelContext = BadgeContext.builder()
+                    .user(user)
+                    .event(BadgeEvent.LEVEL_UP)
+                    .newLevel(xpResult.getNewLevel())
+                    .build();
+            newBadges.addAll(badgeService.checkAndAward(levelContext));
+        }
+
+        // Check streak badges
+        if (streakResult.getNewCurrentDailyStreak() > 0) {
+            BadgeContext streakContext = BadgeContext.builder()
+                    .user(user)
+                    .event(BadgeEvent.STREAK_UPDATED)
+                    .currentStreak(streakResult.getNewCurrentDailyStreak())
+                    .build();
+            newBadges.addAll(badgeService.checkAndAward(streakContext));
+        }
 
         return PomodoroRewardDto.builder()
                 .xpEarned(xpResult.getFinalXpEarned())
@@ -160,11 +199,11 @@ public class PomodoroServiceImpl implements PomodoroService {
                 .sessionStateInvalid(false)
                 .freezeUsed(streakResult.isFreezeUsed())
                 .boostConsumed(boostConsumed)
+                .newBadges(newBadges) // ✨ Added to DTO
                 .build();
     }
 
     private PomodoroRewardDto handleDegradedSuccess(User user, LocalDateTime now) {
-        // ✨ Capture level BEFORE engine calculation
         int levelBeforeXp = user.getLevel();
 
         XpResult xpResult = xpEngine.calculate(user.getLevel(), user.getCurrentXp(), user.getTotalXp(), POMODORO_BASE_XP, 1.0, DEFAULT_EVENT_MULTIPLIER);
@@ -178,11 +217,41 @@ public class PomodoroServiceImpl implements PomodoroService {
 
         applyResultsToUser(user, degradedFlow, streakResult, xpResult, finalGems, now);
 
-        // ✨ Save Degraded Session History (wasDegraded = true)
         recordSession(user, xpResult, calculatedGems, 1.0, 0, true, false, now);
 
-        // ✨ Save Level-Up History if they leveled up off a degraded session
         recordLevelUpsIfOccurred(user, xpResult, levelBeforeXp, "POMODORO", now);
+
+        // ✨ Evaluate badges even on a degraded success (they still finished the timer!)
+        long totalPomodoros = pomodoroSessionRepository.countByUserId(user.getId());
+        List<BadgeAwardDto> newBadges = new ArrayList<>();
+
+        BadgeContext badgeContext = BadgeContext.builder()
+                .user(user)
+                .event(BadgeEvent.POMODORO_COMPLETED)
+                .totalPomodoros(totalPomodoros)
+                .newLevel(xpResult.getNewLevel())
+                .currentStreak(streakResult.getNewCurrentDailyStreak())
+                .build();
+
+        newBadges.addAll(badgeService.checkAndAward(badgeContext));
+
+        if (xpResult.isDidLevelUp()) {
+            BadgeContext levelContext = BadgeContext.builder()
+                    .user(user)
+                    .event(BadgeEvent.LEVEL_UP)
+                    .newLevel(xpResult.getNewLevel())
+                    .build();
+            newBadges.addAll(badgeService.checkAndAward(levelContext));
+        }
+
+        if (streakResult.getNewCurrentDailyStreak() > 0) {
+            BadgeContext streakContext = BadgeContext.builder()
+                    .user(user)
+                    .event(BadgeEvent.STREAK_UPDATED)
+                    .currentStreak(streakResult.getNewCurrentDailyStreak())
+                    .build();
+            newBadges.addAll(badgeService.checkAndAward(streakContext));
+        }
 
         return PomodoroRewardDto.builder()
                 .xpEarned(xpResult.getFinalXpEarned())
@@ -200,6 +269,7 @@ public class PomodoroServiceImpl implements PomodoroService {
                 .flowStreakBroken(false)
                 .sessionStateInvalid(true)
                 .freezeUsed(streakResult.isFreezeUsed())
+                .newBadges(newBadges) // ✨ Added to DTO
                 .build();
     }
 
@@ -238,8 +308,6 @@ public class PomodoroServiceImpl implements PomodoroService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
     }
 
-    // --- Helper Methods for Analytics Recording ---
-
     private void recordSession(User user, XpResult xpResult,
                                int gemsEarned, double multiplier,
                                int flowStreakAtCompletion, boolean wasDegraded,
@@ -261,7 +329,6 @@ public class PomodoroServiceImpl implements PomodoroService {
     private void recordLevelUpsIfOccurred(User user, XpResult xpResult, int levelBeforeXp, String triggeredBy, LocalDateTime now) {
         if (!xpResult.isDidLevelUp()) return;
 
-        // Gracefully handles multi-level jumps by recording each distinct level gained
         for (int level = levelBeforeXp + 1; level <= xpResult.getNewLevel(); level++) {
             LevelUp levelUp = LevelUp.builder()
                     .user(user)

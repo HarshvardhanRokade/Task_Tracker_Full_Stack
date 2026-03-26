@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -31,4 +33,6 @@ public class PomodoroRewardDto {
     private boolean freezeUsed;
 
     private boolean boostConsumed;
+
+    private List<BadgeAwardDto> newBadges;
 }

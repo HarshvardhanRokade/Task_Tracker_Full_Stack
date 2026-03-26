@@ -2,6 +2,7 @@ package com.harsh.task.service.impl;
 
 import com.harsh.task.domain.CreateTaskRequest;
 import com.harsh.task.domain.UpdateTaskRequest;
+import com.harsh.task.domain.dto.BadgeAwardDto;
 import com.harsh.task.domain.dto.GamificationResultDto;
 import com.harsh.task.entity.LevelUp;
 import com.harsh.task.entity.User;
@@ -20,11 +21,13 @@ import com.harsh.task.repository.TagRepository;
 import com.harsh.task.repository.TaskRepository;
 import com.harsh.task.repository.UserRepository;
 import com.harsh.task.service.TaskService;
+import com.harsh.task.badge.BadgeService;
+import com.harsh.task.badge.BadgeContext;
+import com.harsh.task.badge.BadgeEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -40,7 +43,8 @@ public class TaskServiceImpl implements TaskService {
     private final UserRepository userRepository;
     private final XpEngine xpEngine;
     private final StreakEngine streakEngine;
-    private final LevelUpRepository levelUpRepository; // ✨ Injected
+    private final LevelUpRepository levelUpRepository;
+    private final BadgeService badgeService;
 
     private static final int XP_HIGH = 100;
     private static final int GEMS_HIGH = 3;
@@ -54,16 +58,16 @@ public class TaskServiceImpl implements TaskService {
     private static final double DEFAULT_FLOW_MULTIPLIER = 1.0;
     private static final double DEFAULT_EVENT_MULTIPLIER = 1.0;
 
-    // ✨ Added LevelUpRepository to constructor
     public TaskServiceImpl(TaskRepository taskRepository, TagRepository tagRepository,
                            UserRepository userRepository, XpEngine xpEngine, StreakEngine streakEngine,
-                           LevelUpRepository levelUpRepository) {
+                           LevelUpRepository levelUpRepository, BadgeService badgeService) {
         this.taskRepository = taskRepository;
         this.tagRepository = tagRepository;
         this.userRepository = userRepository;
         this.xpEngine = xpEngine;
         this.streakEngine = streakEngine;
         this.levelUpRepository = levelUpRepository;
+        this.badgeService = badgeService;
     }
 
     @Override
@@ -221,7 +225,6 @@ public class TaskServiceImpl implements TaskService {
             user.setXpBoostActive(false); // Burn the boost
         }
 
-        // ✨ 1. Capture original level BEFORE engine call
         int originalLevel = user.getLevel();
 
         XpResult xpResult = xpEngine.calculate(
@@ -247,7 +250,6 @@ public class TaskServiceImpl implements TaskService {
 
         userRepository.save(user);
 
-        // ✨ 2. Record level-ups if they occurred!
         if (xpResult.isDidLevelUp()) {
             for (int level = originalLevel + 1; level <= xpResult.getNewLevel(); level++) {
                 levelUpRepository.save(LevelUp.builder()
@@ -255,11 +257,45 @@ public class TaskServiceImpl implements TaskService {
                         .levelReached(level)
                         .achievedAt(now)
                         .xpTotalAtLevelUp(xpResult.getNewTotalXp())
-                        .triggeredBy("TASK") // Accurately logged as a Task completion
+                        .triggeredBy("TASK")
                         .build());
             }
         }
 
+        // ✨ NEW: Badge Evaluation Logic
+        long totalTasks = taskRepository.countByUserIdAndStatus(userId, TaskStatus.COMPLETED);
+
+        BadgeContext badgeContext = BadgeContext.builder()
+                .user(user)
+                .event(BadgeEvent.TASK_COMPLETED)
+                .totalTasksCompleted(totalTasks)
+                .newLevel(xpResult.getNewLevel())
+                .currentStreak(streakResult.getNewCurrentDailyStreak())
+                .build();
+
+        List<BadgeAwardDto> newBadges = badgeService.checkAndAward(badgeContext);
+
+        // Also check level badges if leveled up
+        if (xpResult.isDidLevelUp()) {
+            BadgeContext levelContext = BadgeContext.builder()
+                    .user(user)
+                    .event(BadgeEvent.LEVEL_UP)
+                    .newLevel(xpResult.getNewLevel())
+                    .build();
+            newBadges.addAll(badgeService.checkAndAward(levelContext));
+        }
+
+        // Also check streak badges
+        if (streakResult.getNewCurrentDailyStreak() > 0) {
+            BadgeContext streakContext = BadgeContext.builder()
+                    .user(user)
+                    .event(BadgeEvent.STREAK_UPDATED)
+                    .currentStreak(streakResult.getNewCurrentDailyStreak())
+                    .build();
+            newBadges.addAll(badgeService.checkAndAward(streakContext));
+        }
+
+        // ✨ Updated return payload to include newBadges
         return GamificationResultDto.builder()
                 .xpEarned(xpResult.getFinalXpEarned())
                 .gemsEarned(baseGems)
@@ -273,6 +309,7 @@ public class TaskServiceImpl implements TaskService {
                 .longestDailyStreak(streakResult.getNewLongestDailyStreak())
                 .freezeUsed(streakResult.isFreezeUsed())
                 .boostConsumed(boostConsumed)
+                .newBadges(newBadges) // ✨ Added to DTO
                 .build();
     }
 }

@@ -144,3 +144,7 @@ export const analyticsApi = {
     getProgression: (period) => apiClient.get('/v1/analytics/progression',
                         { params: { period } }),
 }
+
+export const badgeApi = {
+    getMyBadges: () => apiClient.get('/v1/badges'),
+}

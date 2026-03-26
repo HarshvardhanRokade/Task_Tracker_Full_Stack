@@ -8,6 +8,9 @@ import com.harsh.task.exception.InsufficientGemsException;
 import com.harsh.task.exception.PriceChangedException;
 import com.harsh.task.exception.ResourceNotFoundException;
 import com.harsh.task.repository.UserRepository;
+import com.harsh.task.badge.BadgeService;
+import com.harsh.task.badge.BadgeContext;
+import com.harsh.task.badge.BadgeEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StoreService {
 
     private final UserRepository userRepository;
+    private final BadgeService badgeService; // ✨ Injected
 
     // ✨ FIXED: readOnly transaction keeps Hibernate session open for EAGER collection mapping
     @Transactional(readOnly = true)
@@ -29,13 +33,23 @@ public class StoreService {
     public PurchaseResultDto purchaseItem(Long userId, PurchaseRequestDto request) {
         User user = getUser(userId);
 
-        // Route the purchase to the correct item logic
-        return switch (request.itemId()) {
+        // 1. Route the purchase to the correct item logic and capture the result
+        PurchaseResultDto result = switch (request.itemId()) {
             case "STREAK_FREEZE" -> purchaseStreakFreeze(user, request.expectedCost());
             case "XP_BOOST" -> purchaseXpBoost(user, request.expectedCost());
             case "THEME" -> purchaseTheme(user, request.themeName(), request.expectedCost());
             default -> throw new IllegalArgumentException("Unknown artifact: " + request.itemId());
         };
+
+        // ✨ 2. Fire the Badge Event (we don't need to return the DTOs to the frontend)
+        BadgeContext purchaseContext = BadgeContext.builder()
+                .user(user)
+                .event(BadgeEvent.STORE_PURCHASE)
+                .build();
+        badgeService.checkAndAward(purchaseContext);
+
+        // 3. Return the standard store response
+        return result;
     }
 
     @Transactional

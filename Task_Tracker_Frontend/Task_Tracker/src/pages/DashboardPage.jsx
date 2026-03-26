@@ -4,9 +4,9 @@ import {
     BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
     XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
-import { analyticsApi } from '../api/gameApi'
+import { analyticsApi, badgeApi } from '../api/gameApi'
 
-import { SkeletonBox, SkeletonStatCard } from '../components/ui/Skeleton'
+import { SkeletonBox, SkeletonStatCard, SkeletonBadge } from '../components/ui/Skeleton'
 import ErrorBoundary from '../components/ui/ErrorBoundary'
 import useCountUp from '../hooks/useCountUp'
 
@@ -82,11 +82,16 @@ const DashboardPage = () => {
     const [progression, setProgression] = useState(null)
     const [loading, setLoading]         = useState(true)
     const [error, setError]             = useState(null)
+    const [badges, setBadges]           = useState([])
 
     useEffect(() => {
         analyticsApi.getSummary()
             .then(res => setSummary(res.data))
             .catch(() => setError('Failed to load summary.'))
+            
+        badgeApi.getMyBadges()
+            .then(res => setBadges(res.data))
+            .catch(() => {}) 
     }, [])
 
     const fetchPeriodData = useCallback(async () => {
@@ -118,7 +123,6 @@ const DashboardPage = () => {
 
     if (!summary) return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-5xl mx-auto py-8 space-y-8">
-            {/* Added Skeleton Page Title */}
             <div className="mb-2">
                 <SkeletonBox height="2.5rem" width="14rem" className="rounded-lg" />
             </div>
@@ -164,7 +168,6 @@ const DashboardPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-5xl mx-auto py-8 space-y-8"
         >
-            {/* ✨ STANDARDIZED: Added missing Page Title */}
             <div className="flex justify-between items-center mb-2">
                 <h1 className="text-3xl font-black" style={{ color: 'var(--text-primary)' }}>
                     Dashboard
@@ -225,7 +228,6 @@ const DashboardPage = () => {
 
             {/* ── PERIOD SELECTOR ── */}
             <div className="flex items-center justify-between mt-8">
-                {/* ✨ STANDARDIZED: Downgraded to Section Title (text-xl) */}
                 <h2 className="text-xl font-bold"
                     style={{ color: 'var(--text-primary)' }}>
                     Performance Analytics
@@ -272,6 +274,14 @@ const DashboardPage = () => {
                             </div>
                         </div>
                         <SkeletonBox height="20rem" className="rounded-2xl" />
+
+                        {/* Achievements Skeleton */}
+                        <div className="p-5 rounded-2xl border" style={{ backgroundColor: 'var(--surface-base)', borderColor: 'var(--border-subtle)' }}>
+                            <SkeletonBox height="1.5rem" width="10rem" className="mb-4" />
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {[1, 2, 3, 4].map(i => <SkeletonBadge key={i} />)}
+                            </div>
+                        </div>
                     </motion.div>
                 ) : (
                     <motion.div 
@@ -289,7 +299,7 @@ const DashboardPage = () => {
                                               borderColor: 'var(--border-subtle)' }}>
                                     <SectionTitle>Tasks Completed</SectionTitle>
                                     {taskData?.dailyCompletions?.length > 0 ? (
-                                        <ResponsiveContainer width="100%" height={200}>
+                                        <ResponsiveContainer width="99%" height={200} minWidth={1} minHeight={1}>
                                             <BarChart data={taskData.dailyCompletions}>
                                                 <XAxis dataKey="date"
                                                        tickFormatter={formatChartDate}
@@ -323,7 +333,7 @@ const DashboardPage = () => {
                                     <SectionTitle>By Priority</SectionTitle>
                                     {priorityChartData.some(d => d.value > 0) ? (
                                         <div className="flex-1 flex items-center justify-center min-h-[200px]">
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="99%" height={200} minWidth={1} minHeight={1}>
                                                 <PieChart>
                                                     <Pie
                                                         data={priorityChartData}
@@ -413,7 +423,7 @@ const DashboardPage = () => {
                                               borderColor: 'var(--border-subtle)' }}>
                                     <SectionTitle>Focus Sessions</SectionTitle>
                                     {pomodoroData?.dailySessions?.length > 0 ? (
-                                        <ResponsiveContainer width="100%" height={200}>
+                                        <ResponsiveContainer width="99%" height={200} minWidth={1} minHeight={1}>
                                             <BarChart data={pomodoroData.dailySessions}>
                                                 <XAxis dataKey="date"
                                                        tickFormatter={formatChartDate}
@@ -465,7 +475,7 @@ const DashboardPage = () => {
                                           borderColor: 'var(--border-subtle)' }}>
                                 <SectionTitle>XP Progression</SectionTitle>
                                 {xpChartData.length > 0 ? (
-                                    <ResponsiveContainer width="100%" height={220}>
+                                    <ResponsiveContainer width="99%" height={220} minWidth={1} minHeight={1}>
                                         <LineChart data={xpChartData}>
                                             <XAxis dataKey="label"
                                                    tickFormatter={formatChartDate}
@@ -516,6 +526,39 @@ const DashboardPage = () => {
                                 )}
                             </div>
                         </ErrorBoundary>
+
+                        {/* ── ACHIEVEMENTS ── */}
+                        {badges.length > 0 && (
+                            <ErrorBoundary>
+                                <div className="p-5 rounded-2xl border"
+                                     style={{ backgroundColor: 'var(--surface-base)',
+                                              borderColor: 'var(--border-subtle)' }}>
+                                    <SectionTitle>Achievements</SectionTitle>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {badges.map(badge => (
+                                            <div
+                                                key={badge.badgeKey}
+                                                className="p-3 rounded-xl text-center border transition-transform hover:scale-105"
+                                                style={{
+                                                    backgroundColor: 'var(--surface-raised)',
+                                                    borderColor: 'var(--border-subtle)',
+                                                }}
+                                                title={badge.description}>
+                                                <div className="text-4xl mb-2">{badge.icon}</div>
+                                                <div className="text-xs font-bold mb-1"
+                                                     style={{ color: 'var(--text-primary)' }}>
+                                                    {badge.name}
+                                                </div>
+                                                <div className="text-[10px] font-bold uppercase tracking-wider"
+                                                     style={{ color: 'var(--text-secondary)' }}>
+                                                    {badge.earnedAt}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </ErrorBoundary>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
