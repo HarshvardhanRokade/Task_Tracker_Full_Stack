@@ -3,15 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { taskApi } from '../../api/gameApi';
 import useGameStore from '../../store/useGameStore';
 import { getPriorityRewards } from '../../utils/RewardCalculator';
+// ✨ NEW: Import sounds
+import useGameSounds from '../../hooks/useGameSounds';
 
 const TaskCard = ({ task, onEdit }) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  // ✨ NEW: State to control our custom delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false); 
   
   const { xp, gems } = getPriorityRewards(task.priority);
+  
+  // ✨ NEW: Init sounds
+  const { playTaskComplete } = useGameSounds();
 
   const baseBorderColor = 
     task.priority === 'HIGH' ? 'var(--danger-red)' : 
@@ -20,6 +23,8 @@ const TaskCard = ({ task, onEdit }) => {
 
   const handleCompleteTask = async () => {
     setIsCompleting(true); 
+    playTaskComplete(); // ✨ Play sound immediately on click
+    
     try {
       const response = await taskApi.complete(task.id);
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -108,7 +113,6 @@ const TaskCard = ({ task, onEdit }) => {
         </div>
 
         <div className="flex flex-col gap-3 items-end">
-          {/* ✨ UPGRADED: Real buttons with SVG icons and hover states */}
           <div className="flex gap-2 text-[var(--text-secondary)]">
             <button 
               onClick={onEdit} 
@@ -146,7 +150,6 @@ const TaskCard = ({ task, onEdit }) => {
         </div>
       </motion.div>
 
-      {/* ✨ NEW: The Custom Delete Modal */}
       <AnimatePresence>
         {showDeleteModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

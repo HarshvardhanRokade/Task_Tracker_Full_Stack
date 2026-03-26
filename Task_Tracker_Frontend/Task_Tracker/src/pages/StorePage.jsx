@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { storeApi } from '../api/gameApi';
 import useGameStore from '../store/useGameStore';
 import { SkeletonBox } from '../components/ui/Skeleton';
+// ✨ NEW: Import sounds
+import useGameSounds from '../hooks/useGameSounds';
 
 const STORE_ITEMS = [
   { id: 'STREAK_FREEZE', title: 'Streak Shield', description: 'Auto-activates if you miss a day. Protects your hard-earned streak. No expiry.', icon: '🛡️', type: 'PROTECTION', dynamicPrice: true },
@@ -24,6 +26,8 @@ const TABS = ['PROTECTION', 'BOOSTS', 'COSMETICS'];
 
 const StorePage = () => {
   const { gemBalance, updateGemBalance, setXpBoostActive, setCurrentTheme } = useGameStore();
+  // ✨ NEW: Init sounds
+  const { playPurchase } = useGameSounds();
   
   const [inventory, setInventory] = useState(null);
   const [activeTab, setActiveTab] = useState('PROTECTION');
@@ -61,6 +65,8 @@ const StorePage = () => {
       const payload = { itemId: confirmItem.id, expectedCost, themeName: confirmItem.themeName };
       const response = await storeApi.purchaseItem(payload);
       
+      playPurchase(); // ✨ Play on successful purchase
+
       updateGemBalance(response.data.newGemBalance);
       if (response.data.boostActivated) setXpBoostActive(true);
       if (response.data.themeUnlocked) setCurrentTheme(confirmItem.themeName);
@@ -116,7 +122,6 @@ const StorePage = () => {
             ))}
           </div>
 
-          {/* ✨ Verified: grid-cols-1 md:grid-cols-2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="p-5 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-base)]">
@@ -166,7 +171,6 @@ const StorePage = () => {
             ))}
           </div>
 
-          {/* ✨ Verified: grid-cols-1 md:grid-cols-2 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <AnimatePresence mode="popLayout">
               {visibleItems.map(item => {

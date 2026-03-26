@@ -4,9 +4,14 @@ import useGameStore from '../../store/useGameStore'
 import FloatingXp from './FloatingXp'
 import RewardToast from './RewardToast'
 import LevelUpScreen from './LevelupScreen'
+// ✨ NEW: Import sounds
+import useGameSounds from '../../hooks/useGameSounds'
 
 const RewardOverlay = () => {
   const { pendingReward, isLevelingUp, clearPendingReward, getLevelName } = useGameStore()
+  
+  // ✨ NEW: Init sounds
+  const { playLevelUp } = useGameSounds()
 
   const [showFloating, setShowFloating]   = useState(false)
   const [showToast, setShowToast]         = useState(false)
@@ -15,19 +20,19 @@ const RewardOverlay = () => {
 
   useEffect(() => {
     if (pendingReward) {
-      // Snapshot the reward so it persists during animation even if store clears
       setRewardSnapshot(pendingReward)
       setShowFloating(true)
 
-      // Stagger: toast appears after floating XP starts
       setTimeout(() => setShowToast(true), 400)
 
-      // Level up appears after toast if applicable
       if (isLevelingUp) {
-        setTimeout(() => setShowLevelUp(true), 800)
+        setTimeout(() => {
+          setShowLevelUp(true)
+          playLevelUp() // ✨ Play when level-up screen appears
+        }, 800)
       }
     }
-  }, [pendingReward, isLevelingUp])
+  }, [pendingReward, isLevelingUp, playLevelUp])
 
   const handleDismiss = () => {
     setShowFloating(false)
