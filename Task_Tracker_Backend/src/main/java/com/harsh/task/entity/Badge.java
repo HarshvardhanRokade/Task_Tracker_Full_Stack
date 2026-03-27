@@ -39,4 +39,6 @@ public class Badge {
 
     @Column(name = "requirement_value", nullable = false)
     private int requirementValue;
+
+    private int streak;
 }
