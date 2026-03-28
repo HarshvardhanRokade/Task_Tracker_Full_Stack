@@ -41,4 +41,6 @@ public class Badge {
     private int requirementValue;
 
     private int streak;
+    
+    private int streak2;
 }
