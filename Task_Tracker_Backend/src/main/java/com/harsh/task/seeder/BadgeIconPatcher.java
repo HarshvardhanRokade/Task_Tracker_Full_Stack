@@ -36,7 +36,10 @@ public class BadgeIconPatcher implements CommandLineRunner {
                 Map.entry("POMODORO_10", "🧘"),
                 Map.entry("POMODORO_50", "🎓"),
                 Map.entry("FIRST_PURCHASE", "💎"),
-                Map.entry("GEMS_500", "💰")
+                Map.entry("GEMS_500", "💰"),
+                Map.entry("SEASON_1_GOLD", "🏆"),
+                Map.entry("SEASON_1_SILVER", "🥈"),
+                Map.entry("SEASON_1_BRONZE", "🥉")
         );
 
         badgeRepository.findAll().forEach(badge -> {

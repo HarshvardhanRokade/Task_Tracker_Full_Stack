@@ -104,6 +104,18 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             @Param("after") Instant after
     );
 
+    // Fetch completed tasks within a time period for score calculation
+    @Query("SELECT t FROM Task t " +
+            "WHERE t.user.id = :userId " +
+            "AND t.status = 'COMPLETED' " +
+            "AND t.updated >= :weekStart " +
+            "AND t.updated < :weekEnd")
+    List<Task> findCompletedTasksInPeriod(
+            @Param("userId") Long userId,
+            @Param("weekStart") Instant weekStart,
+            @Param("weekEnd") Instant weekEnd
+    );
+
     // Total completed tasks
     long countByUserIdAndStatus(Long userId, TaskStatus status);
 }
