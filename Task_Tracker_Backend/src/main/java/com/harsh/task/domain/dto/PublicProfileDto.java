@@ -13,6 +13,7 @@ public class PublicProfileDto {
     private int level;
     private String levelTitle;
     private String memberSince;
+    private boolean isCurrentUser;
 
     // Stats
     private int totalXp;

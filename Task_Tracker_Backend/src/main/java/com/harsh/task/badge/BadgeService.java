@@ -27,11 +27,12 @@ public class BadgeService {
 
         // Route to relevant checkers based on event type
         switch (context.getEvent()) {
-            case TASK_COMPLETED  -> checkTaskBadges(context, newlyAwarded);
+            case TASK_COMPLETED     -> checkTaskBadges(context, newlyAwarded);
             case POMODORO_COMPLETED -> checkPomodoroBadges(context, newlyAwarded);
-            case LEVEL_UP        -> checkLevelBadges(context, newlyAwarded);
-            case STREAK_UPDATED  -> checkStreakBadges(context, newlyAwarded);
-            case STORE_PURCHASE  -> checkEconomyBadges(context, newlyAwarded);
+            case LEVEL_UP           -> checkLevelBadges(context, newlyAwarded);
+            case STREAK_UPDATED     -> checkStreakBadges(context, newlyAwarded);
+            case STORE_PURCHASE     -> checkEconomyBadges(context, newlyAwarded);
+            case SEASON_END         -> checkSeasonBadges(context, newlyAwarded);
         }
 
         return newlyAwarded;
@@ -79,6 +80,21 @@ public class BadgeService {
     private void checkEconomyBadges(BadgeContext ctx,
                                     List<BadgeAwardDto> awarded) {
         tryAward(ctx, "FIRST_PURCHASE", true, awarded);
+    }
+
+    // --- Season Badges ---
+    private void checkSeasonBadges(BadgeContext ctx,
+                                   List<BadgeAwardDto> awarded) {
+        int rank         = ctx.getSeasonRank();
+        int seasonNumber = ctx.getSeasonNumber();
+        String badgeKey = "SEASON_" + seasonNumber + "_" +
+                (rank == 1 ? "GOLD" :
+                        rank == 2 ? "SILVER" : "BRONZE");
+
+        // Only check for top 3
+        if (rank <= 3) {
+            tryAward(ctx, badgeKey, true, awarded);
+        }
     }
 
     // --- Core Award Logic ---

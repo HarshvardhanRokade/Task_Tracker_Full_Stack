@@ -16,4 +16,6 @@ public class BadgeContext {
     private final long totalPomodoros;       // For POMODORO_COMPLETED
     private final int currentStreak;         // For STREAK_UPDATED
     private final int totalGemsEarned;       // For STORE_PURCHASE
+    private final int seasonRank;
+    private final int seasonNumber;
 }

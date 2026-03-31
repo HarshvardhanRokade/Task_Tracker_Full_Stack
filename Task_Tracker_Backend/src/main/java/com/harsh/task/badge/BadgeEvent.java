@@ -5,5 +5,6 @@ public enum BadgeEvent {
     POMODORO_COMPLETED,
     LEVEL_UP,
     STREAK_UPDATED,
-    STORE_PURCHASE
+    STORE_PURCHASE,
+    SEASON_END
 }
