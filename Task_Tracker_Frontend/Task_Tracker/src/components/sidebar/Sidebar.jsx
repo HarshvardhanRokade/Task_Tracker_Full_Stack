@@ -10,6 +10,7 @@ const navItems = [
   { name: 'Active Quests', path: '/tasks', icon: '📋' },
   { name: 'Focus Timer', path: '/focus', icon: '⚡' },
   { name: 'Dashboard', path: '/dashboard', icon: '📊' },
+  { name: 'Leaderboard',   path: '/leaderboard', icon: '🏆' },
   { name: 'Tavern', path: '/store', icon: '💎' },
 ];
 

@@ -148,3 +148,10 @@ export const analyticsApi = {
 export const badgeApi = {
     getMyBadges: () => apiClient.get('/v1/badges'),
 }
+
+export const leaderboardApi = {
+    getWeekly:  () => apiClient.get('/v1/leaderboard'),
+    getSeason:  () => apiClient.get('/v1/leaderboard/season'),
+    getProfile: (username) =>
+        apiClient.get(`/v1/leaderboard/profile/${username}`),
+}
