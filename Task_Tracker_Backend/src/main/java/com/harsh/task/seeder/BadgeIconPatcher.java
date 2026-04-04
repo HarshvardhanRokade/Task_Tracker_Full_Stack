@@ -4,8 +4,10 @@ import com.harsh.task.repository.BadgeRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 
+@Slf4j
 @Component
 @Order(1) // ✨ This forces it to run right away!
 public class BadgeIconPatcher implements CommandLineRunner {
@@ -18,7 +20,7 @@ public class BadgeIconPatcher implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        System.out.println("⏳ Running Badge Icon Patcher...");
+        log.info("Patching badge icons...");
 
         Map<String, String> correctIcons = Map.ofEntries(
                 Map.entry("LEVEL_2", "🎯"),
@@ -49,6 +51,6 @@ public class BadgeIconPatcher implements CommandLineRunner {
             }
         });
 
-        System.out.println("🏆🏆🏆 BADGE ICONS PATCHED SUCCESSFULLY! 🏆🏆🏆");
+        log.info("Badge icon patch complete.");
     }
 }

@@ -37,3 +37,8 @@ build/
 # Ignore sensitive Spring Boot properties files
 src/main/resources/application.properties
 src/main/resources/application-*.properties
+
+
+# Build/Compiled files
+target/
+*.class

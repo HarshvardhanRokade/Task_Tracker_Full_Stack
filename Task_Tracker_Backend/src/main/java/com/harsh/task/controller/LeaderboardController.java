@@ -49,10 +49,4 @@ public class LeaderboardController {
                 publicProfileService.getProfile(username, currentUserId)
         );
     }
-
-    @PostMapping("/admin/end-season")
-    public ResponseEntity<String> endSeason() {
-        seasonService.endSeasonAndStartNext();
-        return ResponseEntity.ok("Season ended successfully");
-    }
 }
