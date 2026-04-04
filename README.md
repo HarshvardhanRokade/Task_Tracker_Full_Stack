@@ -145,3 +145,59 @@ npm install
 npm run dev
 
 ```
+
+---
+
+📁 Project Structure
+
+Task_Tracker_Backend/     # Spring Boot application
+├── engine/               # Pure gamification math
+├── security/             # JWT two-token auth
+├── leaderboard/          # Score calculation and seasons
+├── badge/                # Event-driven badge system
+├── service/              # Business logic
+├── controller/           # REST endpoints
+├── entity/               # JPA entities
+├── repository/           # Data access
+└── domain/dto/           # Request and response shapes
+
+Task_Tracker_Frontend/
+└── Task_Tracker/         # React + Vite application
+    ├── api/              # Axios client with interceptors
+    ├── store/            # Zustand global state
+    ├── components/       # Shared UI components
+    ├── hooks/            # Custom React hooks
+    └── pages/            # Full page components
+
+---
+
+🗄️ Database Schema
+
+15 tables with composite indexes for time-series query performance:
+
+• users — core user state and gamification fields
+
+• tasks — task records with priority and status
+
+• tags — tag catalog
+
+• task_tags — many-to-many join
+
+• refresh_tokens — hashed refresh tokens with revocation state
+
+• pomodoro_sessions — individual session history with multipliers
+
+• level_ups — level-up events with trigger source
+
+• badges — badge catalog (19 badges)
+
+• user_badges — earned badge records
+
+• weekly_scores — cached weekly score breakdowns
+
+• seasons — season definitions
+
+• season_results — final season rankings
+
+• user_themes — owned cosmetic themes
+
