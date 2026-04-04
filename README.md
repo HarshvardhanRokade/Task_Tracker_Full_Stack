@@ -131,3 +131,15 @@ mysql -u root -p -e "CREATE DATABASE task_tracker_db;"
 
 # Start — schema creates automatically on first run
 ./mvnw spring-boot:run
+
+---
+
+Frontend
+git clone [https://github.com/yourusername/workspace-frontend](https://github.com/yourusername/workspace-frontend)
+cd workspace-frontend
+
+cp .env.example .env
+# Set VITE_API_BASE_URL=http://localhost:8080/api
+
+npm install
+npm run dev
