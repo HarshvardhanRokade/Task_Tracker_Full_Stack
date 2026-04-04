@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const BreakdownBar = ({ label, value, max, color, icon, detail }) => {
     const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
@@ -37,6 +38,8 @@ const BreakdownBar = ({ label, value, max, color, icon, detail }) => {
 }
 
 const PersonalBreakdown = ({ breakdown }) => {
+    const [showRules, setShowRules] = useState(false)
+
     if (!breakdown) return null
 
     const maxTaskPoints = 21       // 7 days × 3 HIGH tasks
@@ -105,6 +108,93 @@ const PersonalBreakdown = ({ breakdown }) => {
                     week to max your consistency bonus
                 </div>
             )}
+
+            {/* --- RULES TOGGLE SECTION --- */}
+            <div className="mt-4 border-t pt-4"
+                 style={{ borderColor: 'var(--border-subtle)' }}>
+
+                <button
+                    onClick={() => setShowRules(prev => !prev)}
+                    className="flex items-center gap-2 text-xs font-bold
+                               w-full transition-opacity hover:opacity-70"
+                    style={{ color: 'var(--text-secondary)' }}>
+                    <span>{showRules ? '▲' : '▼'}</span>
+                    How is my score calculated?
+                </button>
+
+                <AnimatePresence>
+                    {showRules && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-3 space-y-2 text-xs overflow-hidden"
+                            style={{ color: 'var(--text-secondary)' }}>
+
+                            <div className="p-3 rounded-xl"
+                                 style={{
+                                     backgroundColor: 'var(--surface-raised)'
+                                 }}>
+                                <p className="font-bold mb-2"
+                                   style={{ color: 'var(--text-primary)' }}>
+                                    📋 Task Points
+                                </p>
+                                <p>HIGH quest = 3 pts · MEDIUM = 2 pts · LOW = 1 pt</p>
+                                <p className="mt-1">
+                                    Daily cap: 3 HIGH, 5 MEDIUM, 10 LOW quests score
+                                    per day — quality over quantity.
+                                </p>
+                                <p className="mt-1">
+                                    Quests need at least 1 hour from creation to
+                                    completion — because real work takes real time.
+                                </p>
+                            </div>
+
+                            <div className="p-3 rounded-xl"
+                                 style={{
+                                     backgroundColor: 'var(--surface-raised)'
+                                 }}>
+                                <p className="font-bold mb-2"
+                                   style={{ color: 'var(--text-primary)' }}>
+                                    🍅 Focus Points
+                                </p>
+                                <p>
+                                    Each session = 2 pts base. Consecutive sessions
+                                    in the same day earn bonus points — 2, 3, 4, 5...
+                                </p>
+                                <p className="mt-1">
+                                    Four sessions in one day = 14 pts.
+                                    Sustained focus is rewarded.
+                                </p>
+                            </div>
+
+                            <div className="p-3 rounded-xl"
+                                 style={{
+                                     backgroundColor: 'var(--surface-raised)'
+                                 }}>
+                                <p className="font-bold mb-2"
+                                   style={{ color: 'var(--text-primary)' }}>
+                                    🔥 Consistency Points
+                                </p>
+                                <p>
+                                    +5 pts for every day you complete at least one
+                                    quest or focus session. Maximum 35 pts per week.
+                                </p>
+                                <p className="mt-1">
+                                    Showing up every day beats doing everything
+                                    in one sitting.
+                                </p>
+                            </div>
+
+                            <p className="text-center pt-1 pb-2"
+                               style={{ color: 'var(--text-secondary)' }}>
+                                Scores reset every Monday at midnight.
+                                Season scores accumulate across all weeks.
+                            </p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     )
 }

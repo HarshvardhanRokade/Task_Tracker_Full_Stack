@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { taskApi, tagApi } from '../../api/gameApi';
 import useGameStore from '../../store/useGameStore';
+import ReminderSelector from '../ui/ReminderSelector';
 
 // ✨ Custom Dropdown for the Priority field
 const ModalSelect = ({ value, onChange, options }) => {

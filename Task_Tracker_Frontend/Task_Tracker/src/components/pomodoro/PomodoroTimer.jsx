@@ -127,7 +127,6 @@ const PomodoroTimer = () => {
 
       <div className="flex gap-3 mb-8">
         {[0, 1, 2, 3, 4].map((index) => {
-          // ✨ Now using displayStreak instead of raw flowStreak!
           const isFilled = displayStreak > index;
           const isActiveNode = displayStreak === index && sessionActive && !sessionPaused;
           
@@ -188,12 +187,6 @@ const PomodoroTimer = () => {
           </>
         )}
       </div>
-      
-      {sessionActive && (
-         <button onClick={() => setTimeLeft(2)} className="mt-6 text-xs text-[var(--text-secondary)] hover:text-white underline">
-           [Dev: 2s remaining]
-         </button>
-      )}
     </div>
   );
 };
