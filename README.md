@@ -148,7 +148,7 @@ npm run dev
 
 ---
 
-📁 Project Structure
+## 📁 Project Structure
 
 ```
 Task_Tracker_Backend/     # Spring Boot application
@@ -173,7 +173,7 @@ Task_Tracker_Frontend/
 
 ---
 
-🗄️ Database Schema
+## 🗄️ Database Schema
 
 15 tables with composite indexes for time-series query performance:
 
@@ -213,9 +213,9 @@ Task_Tracker_Frontend/
 
 ---
 
-🌐 API Endpoints
+## 🌐 API Endpoints
 
-Auth
+● Auth
 
 • POST /api/auth/register
 
@@ -225,7 +225,7 @@ Auth
 
 • POST /api/auth/logout
 
-Tasks
+● Tasks
 
 • GET    /api/v1/tasks
 
@@ -239,7 +239,7 @@ Tasks
 
 • GET    /api/v1/tasks/{id}/calendar
 
-Pomodoro
+● Pomodoro
 
 • POST /api/pomodoro/start
 
@@ -251,7 +251,7 @@ Pomodoro
 
 • POST /api/pomodoro/forfeit
 
-Analytics
+● Analytics
 
 • GET /api/v1/analytics/summary
 
@@ -261,7 +261,7 @@ Analytics
 
 • GET /api/v1/analytics/progression?period=MONTH
 
-Leaderboard
+● Leaderboard
 
 • GET /api/v1/leaderboard
 
@@ -269,7 +269,7 @@ Leaderboard
 
 • GET /api/v1/leaderboard/profile/{username}  ← public
 
-Store
+● Store
 
 • GET  /api/v1/store/inventory
 
@@ -277,15 +277,50 @@ Store
 
 • POST /api/v1/store/equip-theme
 
-Badges
+● Badges
 
 • GET /api/v1/badges
 
-Tags
+● Tags
 
 • GET    /api/v1/tags
 
 • POST   /api/v1/tags
 
 • DELETE /api/v1/tags/{id}
+
+---
+
+## 💻 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Language | Java 21 |
+| Framework | Spring Boot 4.x |
+| Security | Spring Security + JJWT 0.12.6 |
+| Database | MySQL 8 + Hibernate 7 |
+| Build | Maven |
+| Frontend | React 18 + Vite |
+| State | Zustand with selective persistence |
+| Animation | Framer Motion |
+| Charts | Recharts |
+| HTTP | Axios with interceptors |
+| Styling | Tailwind CSS + CSS custom properties |
+| Audio | use-sound |
+
+---
+
+## 🔮 What I Would Build Next
+
+• Redis for leaderboard caching instead of MySQL
+
+• WebSocket for real-time leaderboard position updates
+
+• Rate limiting on completion endpoints via Spring's @RateLimiter or a Redis-backed token bucket
+
+• Spring Security method-level authorization with @PreAuthorize
+
+• React Native mobile app sharing the same backend
+
+• Velocity detection — flag accounts completing 10+ tasks in a 60-minute window for review
 
