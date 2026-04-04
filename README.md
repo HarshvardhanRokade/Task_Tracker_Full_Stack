@@ -132,9 +132,9 @@ mysql -u root -p -e "CREATE DATABASE task_tracker_db;"
 # Start — schema creates automatically on first run
 ./mvnw spring-boot:run
 
----
-
-Frontend
+```
+### Frontend
+```bash
 git clone [https://github.com/yourusername/workspace-frontend](https://github.com/yourusername/workspace-frontend)
 cd workspace-frontend
 
@@ -143,3 +143,5 @@ cp .env.example .env
 
 npm install
 npm run dev
+
+```
