@@ -150,6 +150,7 @@ npm run dev
 
 📁 Project Structure
 
+```
 Task_Tracker_Backend/     # Spring Boot application
 ├── engine/               # Pure gamification math
 ├── security/             # JWT two-token auth
@@ -168,6 +169,7 @@ Task_Tracker_Frontend/
     ├── components/       # Shared UI components
     ├── hooks/            # Custom React hooks
     └── pages/            # Full page components
+```
 
 ---
 
@@ -200,4 +202,90 @@ Task_Tracker_Frontend/
 • season_results — final season rankings
 
 • user_themes — owned cosmetic themes
+
+```SQL
+-- All analytics queries hit this pattern
+(user_id, completed_at)  -- pomodoro_sessions
+(user_id, week_start_date) -- weekly_scores
+(week_start_date, total_score DESC) -- leaderboard ranking
+
+```
+
+---
+
+🌐 API Endpoints
+
+Auth
+
+• POST /api/auth/register
+
+• POST /api/auth/login
+
+• POST /api/auth/refresh
+
+• POST /api/auth/logout
+
+Tasks
+
+• GET    /api/v1/tasks
+
+• POST   /api/v1/tasks
+
+• PUT    /api/v1/tasks/{id}
+
+• DELETE /api/v1/tasks/{id}
+
+• POST   /api/v1/tasks/{id}/complete
+
+• GET    /api/v1/tasks/{id}/calendar
+
+Pomodoro
+
+• POST /api/pomodoro/start
+
+• POST /api/pomodoro/pause
+
+• POST /api/pomodoro/resume
+
+• POST /api/pomodoro/complete
+
+• POST /api/pomodoro/forfeit
+
+Analytics
+
+• GET /api/v1/analytics/summary
+
+• GET /api/v1/analytics/tasks?period=WEEK
+
+• GET /api/v1/analytics/pomodoro?period=WEEK
+
+• GET /api/v1/analytics/progression?period=MONTH
+
+Leaderboard
+
+• GET /api/v1/leaderboard
+
+• GET /api/v1/leaderboard/season
+
+• GET /api/v1/leaderboard/profile/{username}  ← public
+
+Store
+
+• GET  /api/v1/store/inventory
+
+• POST /api/v1/store/purchase
+
+• POST /api/v1/store/equip-theme
+
+Badges
+
+• GET /api/v1/badges
+
+Tags
+
+• GET    /api/v1/tags
+
+• POST   /api/v1/tags
+
+• DELETE /api/v1/tags/{id}
 
