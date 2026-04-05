@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 
 @Slf4j
 @Component
-@Profile("dev")
 @RequiredArgsConstructor
 public class GamificationSeeder implements CommandLineRunner {
 
