@@ -21,8 +21,14 @@ Users complete tasks and Pomodoro focus sessions to earn XP, level up, and accum
 ## 📸 Screenshots
 
 | 🏆 Leaderboard | 👤 Public Profile | 📊 Analytics Dashboard |
-|---|---|---|
+|:---:|:---:|:---:|
 | ![Leaderboard](docs/leaderboard.png) | ![Profile](docs/profile.png) | ![Dashboard](docs/dashboard.png) |
+
+<br>
+
+| 📝 Task Engine | 🍅 Pomodoro Timer | 🍻 The Tavern |
+|:---:|:---:|:---:|
+| ![Tasks](docs/tasks.png) | ![Pomodoro](docs/pomodoro.png) | ![Tavern](docs/tavern.png) |
 
 ---
 
