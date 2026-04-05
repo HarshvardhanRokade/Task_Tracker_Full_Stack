@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ["jdk21"]
+nixPkgs = ["jdk21_headless"]
 
 [phases.build]
-cmds = ["mvn clean package -DskipTests -q"]
+cmds = ["mvn clean package -DskipTests"]
 
 [start]
-cmd = "java --enable-preview -jar target/*.jar"
+cmd = "java -jar target/*.jar"

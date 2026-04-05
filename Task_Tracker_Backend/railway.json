@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "java --enable-preview -jar target/*.jar",
+    "startCommand": "java -jar target/*.jar",
     "healthcheckPath": "/actuator/health",
     "healthcheckTimeout": 300
   }
