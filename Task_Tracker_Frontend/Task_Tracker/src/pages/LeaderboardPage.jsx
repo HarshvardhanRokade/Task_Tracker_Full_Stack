@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { leaderboardApi } from '../api/gameApi'
-import LeaderboardEntry from '../leaderboard/TEMP_FILE'
+import LeaderboardEntry from '../leaderboard/LeaderboardEntry'
 import PersonalBreakdown from '../leaderboard/PersonalBreakdown'
 import WeekCountdown from '../leaderboard/WeekCountdown'
 import { SkeletonBox } from '../components/ui/Skeleton'
