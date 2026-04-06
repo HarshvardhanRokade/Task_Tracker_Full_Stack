@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import useGameStore from '../../store/useGameStore'
 import FloatingXp from './FloatingXp'
 import RewardToast from './RewardToast'
-import LevelUpScreen from './LevelupScreen'
+import LevelUpScreen from './LevelUpScreen'
 import useGameSounds from '../../hooks/useGameSounds'
 // ✨ NEW: Import your sleek Badge component
 import BadgeUnlock from './BadgeUnlock'
