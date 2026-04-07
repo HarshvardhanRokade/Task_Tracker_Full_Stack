@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { taskApi } from '../../api/gameApi';
 import useGameStore from '../../store/useGameStore';
-import { getPriorityRewards } from '../../utils/RewardCalculator';
-// ✨ NEW: Import sounds
+import { getPriorityRewards } from '../../utils/rewardCalculator';
 import useGameSounds from '../../hooks/useGameSounds';
 
 const TaskCard = ({ task, onEdit }) => {
