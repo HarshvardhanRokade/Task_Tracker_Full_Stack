@@ -22,6 +22,7 @@ public interface WeeklyScoreRepository
     // Top N scores for a given week — the leaderboard query
     @Query("SELECT ws FROM WeeklyScore ws " +
             "WHERE ws.weekStartDate = :weekStart " +
+            "AND ws.totalScore > 0 " +
             "ORDER BY ws.totalScore DESC")
     List<WeeklyScore> findTopByWeek(
             @Param("weekStart") LocalDate weekStart,
