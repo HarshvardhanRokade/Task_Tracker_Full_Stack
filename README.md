@@ -4,7 +4,7 @@
 
 A full-stack productivity application that applies RPG game mechanics to task management and focus sessions. Built to explore how gamification drives genuine daily habit formation rather than one-time engagement.
 
-🔗 **[Live Demo][live-demo-link]** · 📹 **[Demo Video][demo-video-link]** · 💻 **[Frontend Repo][frontend-repo-link]**
+🔗 **[Live Demo][https://task-tracker-full-stack-sigma.vercel.app/]** · 📹 **[Demo Video][demo-video-link]** · 💻 **[Frontend Repo][https://github.com/HarshvardhanRokade/Task_Tracker_Full_Stack/tree/main/Task_Tracker_Frontend/Task_Tracker]**
 
 > **Demo credentials:** `demo@workspace.app` / `Demo123!`
 
