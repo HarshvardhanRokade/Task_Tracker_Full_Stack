@@ -13,18 +13,24 @@ import org.springframework.stereotype.Service;
 public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    // Get this from Railway variables!
     @Value("${RESEND_API_KEY}")
     private String resendApiKey;
 
     public void sendReminderEmail(String toEmail, String taskTitle, String description) {
         Resend resend = new Resend(resendApiKey);
 
+        // This prevents the word "null" from printing if the task has no description
+        String safeDescription = (description != null && !description.trim().isEmpty())
+                ? description
+                : "No description provided.";
+
         SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
-                .from("onboarding@resend.dev") // Must be this exact address during testing
+                .from("Task Tracker <onboarding@resend.dev>") // Adds a clean sender name
                 .to(toEmail)
-                .subject("Reminder: " + taskTitle)
-                .html("<p>Don't forget to complete: <strong>" + taskTitle + "</strong></p><p>" + description + "</p>")
+                .subject("Task Reminder: " + taskTitle)
+                .html("<p>This is a reminder for your task: <strong>" + taskTitle + "</strong></p>" +
+                        "<p>Description: " + safeDescription + "</p>" +
+                        "<p>Time to get back to work!</p>")
                 .build();
 
         try {
