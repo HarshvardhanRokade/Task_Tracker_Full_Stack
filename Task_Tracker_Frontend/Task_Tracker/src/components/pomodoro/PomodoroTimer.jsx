@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { pomodoroApi } from '../../api/gameApi';
+import { pomodoroApi, taskApi } from '../../api/gameApi';
 import useGameStore from '../../store/useGameStore';
 
-const PomodoroTimer = () => {
+// ✨ UPDATE: Added activeTaskId as a prop
+const PomodoroTimer = ({ activeTaskId }) => {
   const { 
     flowStreak, 
     sessionActive, 
@@ -19,7 +20,6 @@ const PomodoroTimer = () => {
   const isCompletingRef = useRef(false);
 
   // --- VISUAL SYNC STATE ---
-  // Prevents the circles from filling up before the reward toast finishes animating
   const [displayStreak, setDisplayStreak] = useState(flowStreak);
 
   useEffect(() => {
@@ -30,16 +30,24 @@ const PomodoroTimer = () => {
   // --- API HANDLERS ---
   const handleComplete = useCallback(async () => {
     try {
+      // 1. Log the Pomodoro session (global XP/Gems)
       const response = await pomodoroApi.complete();
       applyReward(response.data);
+      
+      // ✨ UPDATE 2. Increment the specific task's counter if a task is active
+      if (activeTaskId) {
+        await taskApi.completePomodoro(activeTaskId);
+      }
       
       setSessionActive(false);
       setSessionPaused(false);
       setTimeLeft(WORK_TIME);
     } catch (err) {
+      console.error(err);
       setError('Failed to log completed session.');
     }
-  }, [applyReward, setSessionActive, setSessionPaused, setError]);
+  // ✨ UPDATE: Added activeTaskId to dependency array
+  }, [applyReward, setSessionActive, setSessionPaused, setError, activeTaskId]);
 
   useEffect(() => {
     let interval = null;
@@ -89,8 +97,6 @@ const PomodoroTimer = () => {
     try {
       await pomodoroApi.forfeit();
     } catch (err) {
-      // Non-critical if it fails on the backend, we still want to reset the UI 
-      // so the user isn't trapped in a broken timer.
       console.error('Failed to forfeit on backend', err);
     } finally {
       setSessionActive(false);

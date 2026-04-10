@@ -6,7 +6,8 @@ import useGameStore from '../store/useGameStore';
 
 const FocusPage = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const { pomodoroFlowStreak, sessionActive } = useGameStore();
+  
+  const { pomodoroFlowStreak, sessionActive, activeTask } = useGameStore();
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 300);
@@ -40,7 +41,6 @@ const FocusPage = () => {
       className="max-w-4xl mx-auto py-12"
     >
       <div className="text-center mb-10">
-        {/* ✨ STANDARDIZED: text-3xl font-black */}
         <h2 className="text-3xl font-black mb-3" style={{ color: 'var(--text-primary)' }}>
           Deep Work Protocol
         </h2>
@@ -50,7 +50,8 @@ const FocusPage = () => {
         </p>
       </div>
 
-      <PomodoroTimer />
+      {/* ✨ UPDATE: Passed the active task ID down to the timer */}
+      <PomodoroTimer activeTaskId={activeTask?.id} />
 
       {pomodoroFlowStreak === 0 && !sessionActive && (
           <motion.div
@@ -67,7 +68,6 @@ const FocusPage = () => {
           </motion.div>
       )}
 
-      {/* ✨ STANDARDIZED: rounded-2xl and p-5 */}
       <div 
         className="mt-12 max-w-md mx-auto text-sm p-5 rounded-2xl border" 
         style={{ 

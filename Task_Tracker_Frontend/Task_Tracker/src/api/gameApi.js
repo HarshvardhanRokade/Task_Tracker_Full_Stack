@@ -112,6 +112,7 @@ export const taskApi = {
     updateStatus: (taskId, status) => apiClient.put(
                     `/v1/tasks/${taskId}/status`, null, { params: { status } }),
     complete:     (taskId)      => apiClient.post(`/v1/tasks/${taskId}/complete`),
+    completePomodoro: (taskId)  => apiClient.post(`/v1/tasks/${taskId}/pomodoro`),
     delete:       (taskId)      => apiClient.delete(`/v1/tasks/${taskId}`),
 }
 

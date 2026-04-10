@@ -175,22 +175,22 @@ public class AuthService {
                 .build();
     }
 
-    private void setRefreshTokenCookie(HttpServletResponse response,
-                                       String rawToken) {
-        Cookie cookie = new Cookie(refreshCookieName, rawToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Set true in production with HTTPS
-        cookie.setPath("/api/auth"); // Cookie only sent to auth endpoints
-        cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days in seconds
-        response.addCookie(cookie);
+    private void setRefreshTokenCookie(HttpServletResponse response, String rawToken) {
+        String cookieValue = String.format(
+                "%s=%s; HttpOnly; Secure; SameSite=None; Path=/api/auth; Max-Age=%d",
+                refreshCookieName,
+                rawToken,
+                7 * 24 * 60 * 60
+        );
+        response.addHeader("Set-Cookie", cookieValue);
     }
 
     private void clearRefreshTokenCookie(HttpServletResponse response) {
-        Cookie cookie = new Cookie(refreshCookieName, "");
-        cookie.setHttpOnly(true);
-        cookie.setPath("/api/auth");
-        cookie.setMaxAge(0); // Immediately expire
-        response.addCookie(cookie);
+        String cookieValue = String.format(
+                "%s=; HttpOnly; Secure; SameSite=None; Path=/api/auth; Max-Age=0",
+                refreshCookieName
+        );
+        response.addHeader("Set-Cookie", cookieValue);
     }
 
     private String extractRefreshTokenFromCookie(HttpServletRequest request) {
