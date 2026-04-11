@@ -30,13 +30,13 @@ public class EmailService {
                 <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
                     
                     <div style="background-color: #111827; padding: 30px; text-align: center;">
-                        <h1 style="color: #2ecc71; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Deep Work Protocol</h1>
+                        <h1 style="color: #2ecc71; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Task Reminder</h1>
                     </div>
                     
                     <div style="padding: 40px 30px;">
-                        <h2 style="margin-top: 0; color: #111827; font-size: 22px;">Time to focus! 🎯</h2>
+                        <h2 style="margin-top: 0; color: #111827; font-size: 22px;">Action Required! 🚀</h2>
                         <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 25px;">
-                            This is your automated reminder to get back into the flow state and crush your goals.
+                            You set a reminder for the following task. It is time to knock it off your list and earn your XP!
                         </p>
                         
                         <div style="background-color: #f3f4f6; border-left: 4px solid #2ecc71; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
@@ -45,14 +45,14 @@ public class EmailService {
                         </div>
                         
                         <div style="text-align: center;">
-                            <a href="https://task-tracker-full-stack-sigma.vercel.app" style="background-color: #2ecc71; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block;">Start Pomodoro Session</a>
+                            <a href="https://task-tracker-full-stack-sigma.vercel.app" style="background-color: #2ecc71; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block;">Open Task Dashboard</a>
                         </div>
                     </div>
                     
                     <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
                         <p style="margin: 0; font-size: 12px; color: #9ca3af;">
                             Sent securely from <a href="https://tasktracker.quest" style="color: #2ecc71; text-decoration: none;">tasktracker.quest</a><br/>
-                            Keep up your focus streak! ⚡
+                            Keep grinding! ⚔️
                         </p>
                     </div>
                     
@@ -65,12 +65,13 @@ public class EmailService {
                 .replace("{{TASK_TITLE}}", taskTitle)
                 .replace("{{TASK_DESC}}", safeDescription);
 
-        // 3. Build the Resend request
+        // 3. Build the Resend request (with both HTML and plain-text fallback)
         SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
                 .from("Task Tracker <admin@tasktracker.quest>")
                 .to(toEmail)
                 .subject("🎯 Action Required: " + taskTitle)
                 .html(finalHtmlContent)
+                .text("Task Reminder: " + taskTitle + "\nDescription: " + safeDescription + "\n\nLog in to your dashboard to complete it!")
                 .build();
 
         try {
