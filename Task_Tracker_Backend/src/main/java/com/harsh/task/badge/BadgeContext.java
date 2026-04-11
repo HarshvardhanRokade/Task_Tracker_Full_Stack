@@ -18,6 +18,4 @@ public class BadgeContext {
     private final int totalGemsEarned;       // For STORE_PURCHASE
     private final int seasonRank;
     private final int seasonNumber;
-
-    private final int streak;
 }
