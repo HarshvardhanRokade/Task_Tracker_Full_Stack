@@ -328,5 +328,5 @@ Task_Tracker_Frontend/
 
 • React Native mobile app sharing the same backend
 
-• Velocity detection — flag accounts completing 10+ tasks in a 60-minute window for review
+• Velocity detection — flag accounts completing 10+ tasks in a 60-minute window for review    
 
