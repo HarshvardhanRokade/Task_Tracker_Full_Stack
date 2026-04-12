@@ -12,7 +12,7 @@
 
 A full-stack productivity application that applies RPG game mechanics to task management and Pomodoro focus sessions. Built to solve the retention problem in standard productivity tools — most apps get abandoned because completing a task feels like work, not progress. Workspace makes consistency feel rewarding by turning daily habits into a competitive game.
 
-🔗 **[Live Demo](www.tasktracker.quest)** &nbsp;·&nbsp;
+🔗 **[Live Demo](https://tasktracker.quest)** &nbsp;·&nbsp;
 💻 **[Repository](https://github.com/HarshvardhanRokade/Task_Tracker_Full_Stack)**
 
 > **Demo credentials:** `newbie_user` / `Password123!`
