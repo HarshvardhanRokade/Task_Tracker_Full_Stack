@@ -179,6 +179,7 @@ npm run dev
 ---
 
 ## 📁 Project Structure
+```
 Task_Tracker_Backend/
 ├── engine/           # Pure gamification math — zero Spring deps
 │   ├── XpEngine.java
@@ -210,11 +211,12 @@ Task_Tracker_Frontend/Task_Tracker/
 │   └── ui/           # Skeleton loaders, error boundaries
 ├── hooks/            # useCountUp, useGameSounds
 └── pages/            # Full page components
+```
 
 ---
 
 ## 🗄️ Database Schema
-
+```
 13 tables with composite indexes for time-series query performance:
 users              — core user state and all gamification fields
 tasks              — task records with priority, status, reminder time
@@ -229,6 +231,7 @@ weekly_scores      — hybrid-cached weekly score breakdowns
 seasons            — season definitions with active flag
 season_results     — final season rankings
 user_themes        — owned cosmetic theme records
+```
 
 **Key indexes:**
 ```sql
