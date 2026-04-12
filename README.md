@@ -53,3 +53,7 @@ These classes are independently unit testable in milliseconds without spinning u
 ```
 
 ### 🔐 Two-Token JWT Authentication
+Access token  — 15 minutes · Zustand memory only · Never touches disk
+Refresh token — 7 days · HttpOnly cookie · SHA-256 hashed in database
+
+Every refresh **rotates** the token and revokes the old one. If a stolen refresh token is replayed after the legitimate user has already refreshed, the backend detects a revoked token being reused, immediately revokes **all sessions** for that user, and forces re-login. The attack window is limited to one token lifetime.
